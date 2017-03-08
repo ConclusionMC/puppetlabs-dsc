@@ -1,14 +1,14 @@
 require 'pathname'
 
-Puppet::Type.newtype(:dsc_wds_addinstallimage) do
+Puppet::Type.newtype(:dsc_cwds_initialize) do
   require Pathname.new(__FILE__).dirname + '../../' + 'puppet/type/base_dsc'
   require Pathname.new(__FILE__).dirname + '../../puppet_x/puppetlabs/dsc_type_helpers'
 
 
   @doc = %q{
-    The DSC WDS_AddInstallimage resource type.
+    The DSC cWDS_Initialize resource type.
     Automatically generated from
-    'xCMC_WDS/DSCResources/WDS_AddInstallimage/WDS_AddInstallimage.schema.mof'
+    'cWDS/DSCResources/cWDS_Initialize/cWDS_Initialize.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.
@@ -21,12 +21,12 @@ Puppet::Type.newtype(:dsc_wds_addinstallimage) do
   }
 
   validate do
-      fail('dsc_wimfile is a required attribute') if self[:dsc_wimfile].nil?
+      fail('dsc_ensure is a required attribute') if self[:dsc_ensure].nil?
     end
 
-  def dscmeta_resource_friendly_name; 'WDS_AddInstallimage' end
-  def dscmeta_resource_name; 'WDS_AddInstallimage' end
-  def dscmeta_module_name; 'xCMC_WDS' end
+  def dscmeta_resource_friendly_name; 'cWDS_Initialize' end
+  def dscmeta_resource_name; 'cWDS_Initialize' end
+  def dscmeta_module_name; 'cWDS' end
   def dscmeta_module_version; '1.0' end
 
   newparam(:name, :namevar => true ) do
@@ -35,6 +35,7 @@ Puppet::Type.newtype(:dsc_wds_addinstallimage) do
   ensurable do
     newvalue(:exists?) { provider.exists? }
     newvalue(:present) { provider.create }
+    newvalue(:absent)  { provider.destroy }
     defaultto { :present }
   end
 
@@ -54,30 +55,34 @@ Puppet::Type.newtype(:dsc_wds_addinstallimage) do
     end
   end
 
-  # Name:         WimFile
+  # Name:         Ensure
   # Type:         string
   # IsMandatory:  True
-  # Values:       None
-  newparam(:dsc_wimfile) do
+  # Values:       ["Present", "Absent"]
+  newparam(:dsc_ensure) do
     def mof_type; 'string' end
     def mof_is_embedded?; false end
-    desc "WimFile"
+    desc "Ensure - Valid values are Present, Absent."
     isrequired
     validate do |value|
+      resource[:ensure] = value.downcase
       unless value.kind_of?(String)
         fail("Invalid value '#{value}'. Should be a string")
+      end
+      unless ['Present', 'present', 'Absent', 'absent'].include?(value)
+        fail("Invalid value '#{value}'. Valid values are Present, Absent")
       end
     end
   end
 
-  # Name:         ImageGroup
+  # Name:         RemoteInstallDir
   # Type:         string
   # IsMandatory:  False
   # Values:       None
-  newparam(:dsc_imagegroup) do
+  newparam(:dsc_remoteinstalldir) do
     def mof_type; 'string' end
     def mof_is_embedded?; false end
-    desc "ImageGroup"
+    desc "RemoteInstallDir"
     validate do |value|
       unless value.kind_of?(String)
         fail("Invalid value '#{value}'. Should be a string")
@@ -108,7 +113,7 @@ Puppet::Type.newtype(:dsc_wds_addinstallimage) do
   end
 end
 
-Puppet::Type.type(:dsc_wds_addinstallimage).provide :powershell, :parent => Puppet::Type.type(:base_dsc).provider(:powershell) do
+Puppet::Type.type(:dsc_cwds_initialize).provide :powershell, :parent => Puppet::Type.type(:base_dsc).provider(:powershell) do
   confine :true => (Gem::Version.new(Facter.value(:powershell_version)) >= Gem::Version.new('5.0.10240.16384'))
   defaultfor :operatingsystem => :windows
 
