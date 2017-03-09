@@ -53,6 +53,9 @@ Function Set-TargetResource {
         [string]$ImageGroup,
 
         [Parameter(Mandatory=$False)]
+        [bool]$SkipVerify = $False,
+
+        [Parameter(Mandatory=$False)]
         [bool]$DesiredState
 
     )
@@ -82,6 +85,9 @@ Function Test-TargetResource {
         [Parameter(Mandatory=$True)]
         [ValidateNotNullOrEmpty()]
         [string]$ImageGroup,
+
+        [Parameter(Mandatory=$False)]
+        [bool]$SkipVerify = $False,
 
         [Parameter(Mandatory=$False)]
         [bool]$DesiredState
