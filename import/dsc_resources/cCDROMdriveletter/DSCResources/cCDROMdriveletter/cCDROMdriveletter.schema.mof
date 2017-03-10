@@ -1,8 +1,0 @@
-
-[ClassVersion("1.0.0.0"), FriendlyName("cCDROMdriveletter")]
-class cCDROMdriveletter : OMI_BaseResource
-{
-    [Key] String DriveLetter;
-    [Write, ValueMap{"Present","Absent"}, Values{"Present","Absent"}] string Ensure;
-};
-
