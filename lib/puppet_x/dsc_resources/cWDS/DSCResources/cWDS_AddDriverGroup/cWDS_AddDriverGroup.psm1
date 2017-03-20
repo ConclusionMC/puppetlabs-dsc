@@ -31,11 +31,11 @@
     If ($Ensure -eq 'Present') {
         If (!($Test)) { $DesiredState = $False }
         Else{       
-            If (!([string]::IsNullOrEmpty($Enabled))) {
+            If ($PSBoundParameters.ContainsKey('Enabled')) {
                 $CurrentEnabled = (($Output | Select-String -Pattern 'Enabled:') -split ': ')[1].Trim()
                 If ($CurrentEnabled -ne $Enabled) { $DesiredState = $False }
             }
-            If (!([string]::IsNullOrEmpty($Applicability))) { 
+            If ($PSBoundParameters.ContainsKey('Applicability')) { 
                 $CurrentApplicability = (($Output | Select-String -Pattern 'Applicability:') -split ': ')[1].Trim()
                 If ($CurrentApplicability -ne $Applicability) { $DesiredState = $False }
             }
@@ -85,15 +85,15 @@ Function Set-TargetResource {
     If ($Ensure -eq 'Present') {
         If (!($Test)) { 
             WdsUtil /Add-DriverGroup /DriverGroup:"$DriverGroup" 
-            If (!([string]::IsNullOrEmpty($Enabled))) { WdsUtil /Set-DriverGroup /DriverGroup:"$DriverGroup" /Enabled:"$Enabled" }
-            If (!([string]::IsNullOrEmpty($Applicability))) { WdsUtil /Set-DriverGroup /DriverGroup:"$DriverGroup" /Applicability:"$Applicability" } 
+            If ($PSBoundParameters.ContainsKey('Enabled')) { WdsUtil /Set-DriverGroup /DriverGroup:"$DriverGroup" /Enabled:"$Enabled" }
+            If ($PSBoundParameters.ContainsKey('Applicability')) { WdsUtil /Set-DriverGroup /DriverGroup:"$DriverGroup" /Applicability:"$Applicability" } 
         }
         Else {        
-            If (!([string]::IsNullOrEmpty($Enabled))) {
+            If ($PSBoundParameters.ContainsKey('Enabled')) {
                 $CurrentEnabled = (($Output | Select-String -Pattern 'Enabled:') -split ': ')[1].Trim()
                 If ($CurrentEnabled -ne $Enabled) { WdsUtil /Set-DriverGroup /DriverGroup:"$DriverGroup" /Enabled:"$Enabled" }
             }
-            If (!([string]::IsNullOrEmpty($Applicability))) { 
+            If ($PSBoundParameters.ContainsKey('Applicability')) { 
                 $CurrentApplicability = (($Output | Select-String -Pattern 'Applicability:') -split ': ')[1].Trim()
                 If ($CurrentApplicability -ne $Applicability) { WdsUtil /Set-DriverGroup /DriverGroup:"$DriverGroup" /Applicability:"$Applicability" }
             }
@@ -136,11 +136,11 @@ Function Test-TargetResource {
     If ($Ensure -eq 'Present') {
         If (!($Test)) { Return $False }
         Else {        
-            If (!([string]::IsNullOrEmpty($Enabled))) {
+            If ($PSBoundParameters.ContainsKey('Enabled')) {
                 $CurrentEnabled = (($Output | Select-String -Pattern 'Enabled:') -split ': ')[1].Trim()
                 If ($CurrentEnabled -ne $Enabled) { Return $False }
             }
-            If (!([string]::IsNullOrEmpty($Applicability))) { 
+            If ($PSBoundParameters.ContainsKey('Applicability')) { 
                 $CurrentApplicability = (($Output | Select-String -Pattern 'Applicability:') -split ': ')[1].Trim()
                 If ($CurrentApplicability -ne $Applicability) { Return $False }
             }

@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_cwds_pendingdevicepolicy) do
   @doc = %q{
     The DSC cWDS_PendingDevicePolicy resource type.
     Automatically generated from
-    'custom_dsc_modules/cWDS/DSCResources/cWDS_PendingDevicePolicy/cWDS_PendingDevicePolicy.schema.mof'
+    'cWDS/DSCResources/cWDS_PendingDevicePolicy/cWDS_PendingDevicePolicy.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.

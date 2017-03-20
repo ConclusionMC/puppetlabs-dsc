@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_cwds_unattendfile) do
   @doc = %q{
     The DSC cWDS_UnattendFile resource type.
     Automatically generated from
-    'custom_dsc_modules/cWDS/DSCResources/cWDS_UnattendFile/cWDS_UnattendFile.schema.mof'
+    'cWDS/DSCResources/cWDS_UnattendFile/cWDS_UnattendFile.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.

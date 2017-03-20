@@ -37,7 +37,7 @@
     If ($CurrentPolicy -ne $Hash[$Policy]) { $DesiredState = $False }
     If ($CurrentPrecedence -ne $CommandlinePrecedence) { $DesiredState = $False }
 
-    If (!([string]::IsNullOrEmpty($x86UnattendFile))) {
+    If ($PSBoundParameters.ContainsKey('x86UnattendFile')) {
         $CurrentUnattendFile = (($UnattendPolicy.Context.PostContext | Select-String -Pattern "^x86 ") -split ' -').Trim()
         If ($CurrentUnattendFile.Count -lt 2) { $CurrentUnattendFile = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentUnattendFile[1])) { $CurrentUnattendFile = 'unset'  }
@@ -45,7 +45,7 @@
         If ($CurrentUnattendFile -ne $x86UnattendFile.ToLower()) { $DesiredState = $False }
     }
 
-    If (!([string]::IsNullOrEmpty($x64UnattendFile))) {
+    If ($PSBoundParameters.ContainsKey('x64UnattendFile')) {
         $CurrentUnattendFile = (($UnattendPolicy.Context.PostContext | Select-String -Pattern "^x64 ") -split ' -').Trim()
         If ($CurrentUnattendFile.Count -lt 2) { $CurrentUnattendFile = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentUnattendFile[1])) { $CurrentUnattendFile = 'unset'  }
@@ -53,7 +53,7 @@
         If ($CurrentUnattendFile -ne $x64UnattendFile.ToLower()) { $DesiredState = $False }
     }
 
-    If (!([string]::IsNullOrEmpty($ia64UnattendFile))) {
+    If ($PSBoundParameters.ContainsKey('ia64UnattendFile')) {
         $CurrentUnattendFile = (($UnattendPolicy.Context.PostContext | Select-String -Pattern "^ia64 ") -split ' -').Trim()
         If ($CurrentUnattendFile.Count -lt 2) { $CurrentUnattendFile = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentUnattendFile[1])) { $CurrentUnattendFile = 'unset'  }
@@ -109,7 +109,7 @@ Function Set-TargetResource {
     If ($CurrentPolicy -ne $Hash[$Policy]) { WdsUtil /Set-Server /Server:Localhost /WdsUnattend /Policy:"$Policy" }
     If ($CurrentPrecedence -ne $CommandlinePrecedence) { WdsUtil /Set-Server /Server:Localhost /WdsUnattend /CommandlinePrecedence:"$CommandlinePrecedence" }
 
-    If (!([string]::IsNullOrEmpty($x86UnattendFile))) {
+    If ($PSBoundParameters.ContainsKey('x86UnattendFile')) {
         $CurrentUnattendFile = (($UnattendPolicy.Context.PostContext | Select-String -Pattern "^x86 ") -split ' -').Trim()
         If ($CurrentUnattendFile.Count -lt 2) { $CurrentUnattendFile = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentUnattendFile[1])) { $CurrentUnattendFile = 'unset'  }
@@ -120,7 +120,7 @@ Function Set-TargetResource {
         }
     }
 
-    If (!([string]::IsNullOrEmpty($x64UnattendFile))) {
+    If ($PSBoundParameters.ContainsKey('x64UnattendFile')) {
         $CurrentUnattendFile = (($UnattendPolicy.Context.PostContext | Select-String -Pattern "^x64 ") -split ' -').Trim()
         If ($CurrentUnattendFile.Count -lt 2) { $CurrentUnattendFile = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentUnattendFile[1])) { $CurrentUnattendFile = 'unset'  }
@@ -131,7 +131,7 @@ Function Set-TargetResource {
         }
     }
 
-    If (!([string]::IsNullOrEmpty($ia64UnattendFile))) {
+    If ($PSBoundParameters.ContainsKey('ia64UnattendFile')) {
         $CurrentUnattendFile = (($UnattendPolicy.Context.PostContext | Select-String -Pattern "^ia64 ") -split ' -').Trim()
         If ($CurrentUnattendFile.Count -lt 2) { $CurrentUnattendFile = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentUnattendFile[1])) { $CurrentUnattendFile = 'unset'  }
@@ -180,7 +180,7 @@ Function Test-TargetResource {
     If ($CurrentPolicy -ne $Hash[$Policy]) { Return $False }
     If ($CurrentPrecedence -ne $CommandlinePrecedence) { Return $False }
 
-    If (!([string]::IsNullOrEmpty($x86UnattendFile))) {
+    If ($PSBoundParameters.ContainsKey('x86UnattendFile')) {
         $CurrentUnattendFile = (($UnattendPolicy.Context.PostContext | Select-String -Pattern "^x86 ") -split ' -').Trim()
         If ($CurrentUnattendFile.Count -lt 2) { $CurrentUnattendFile = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentUnattendFile[1])) { $CurrentUnattendFile = 'unset'  }
@@ -188,7 +188,7 @@ Function Test-TargetResource {
         If ($CurrentUnattendFile -ne $x86UnattendFile.ToLower()) { Return $False }
     }
 
-    If (!([string]::IsNullOrEmpty($x64UnattendFile))) {
+    If ($PSBoundParameters.ContainsKey('x64UnattendFile')) {
         $CurrentUnattendFile = (($UnattendPolicy.Context.PostContext | Select-String -Pattern "^x64 ") -split ' -').Trim()
         If ($CurrentUnattendFile.Count -lt 2) { $CurrentUnattendFile = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentUnattendFile[1])) { $CurrentUnattendFile = 'unset'  }
@@ -196,7 +196,7 @@ Function Test-TargetResource {
         If ($CurrentUnattendFile -ne $x64UnattendFile.ToLower()) { Return $False }
     }
 
-    If (!([string]::IsNullOrEmpty($ia64UnattendFile))) {
+    If ($PSBoundParameters.ContainsKey('ia64UnattendFile')) {
         $CurrentUnattendFile = (($UnattendPolicy.Context.PostContext | Select-String -Pattern "^ia64 ") -split ' -').Trim()
         If ($CurrentUnattendFile.Count -lt 2) { $CurrentUnattendFile = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentUnattendFile[1])) { $CurrentUnattendFile = 'unset'  }

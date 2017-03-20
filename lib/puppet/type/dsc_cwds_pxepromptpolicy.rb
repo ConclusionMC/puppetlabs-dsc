@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_cwds_pxepromptpolicy) do
   @doc = %q{
     The DSC cWDS_PxePromptPolicy resource type.
     Automatically generated from
-    'custom_dsc_modules/cWDS/DSCResources/cWDS_PxePromptPolicy/cWDS_PxePromptPolicy.schema.mof'
+    'cWDS/DSCResources/cWDS_PxePromptPolicy/cWDS_PxePromptPolicy.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.

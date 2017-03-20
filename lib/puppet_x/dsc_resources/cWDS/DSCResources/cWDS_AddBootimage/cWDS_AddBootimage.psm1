@@ -64,8 +64,8 @@ Function Set-TargetResource {
     )
 
     $Parameters = @{ 'Path' = $WimFile ; 'NewImageName' = $NewImageName ; 'SkipVerify' = $SkipVerify }
-    If(!([string]::IsNullOrEmpty($NewFileName))) { $Parameters.Add('NewFileName',$NewFileName) }
-    If(!([string]::IsNullOrEmpty($NewDescription))) { $Parameters.Add('NewDescription',$NewDescription) }
+    If ($PSBoundParameters.ContainsKey('NewFileName')) { $Parameters.Add('NewFileName',$NewFileName) }
+    If ($PSBoundParameters.ContainsKey('NewDescription')) { $Parameters.Add('NewDescription',$NewDescription) }
 
     Import-WdsBootImage @Parameters
 

@@ -9,5 +9,5 @@
 	CLRVersion        = "4.0"; 
 	CmdletsToExport   = "*"; 
 	Author            = "Bob Smienk"; 
-	ModuleVersion     = "1.0"
+	ModuleVersion     = "1.1"
 }

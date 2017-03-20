@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_cwds_defaultn12bootprogram) do
   @doc = %q{
     The DSC cWDS_DefaultN12BootProgram resource type.
     Automatically generated from
-    'custom_dsc_modules/cWDS/DSCResources/cWDS_DefaultN12BootProgram/cWDS_DefaultN12BootProgram.schema.mof'
+    'cWDS/DSCResources/cWDS_DefaultN12BootProgram/cWDS_DefaultN12BootProgram.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.

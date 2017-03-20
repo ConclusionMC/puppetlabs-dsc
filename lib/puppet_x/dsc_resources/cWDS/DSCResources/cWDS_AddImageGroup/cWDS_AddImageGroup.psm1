@@ -22,7 +22,7 @@
 
     If ($Ensure -eq 'Present') {
         If ($Test -eq $Null) { $DesiredState = $False }
-        Elseif (!([string]::IsNullOrEmpty($SecuritySDDL))) { If ($Test.Security.ToString() -cne $SecuritySDDL) { $DesiredState = $False } }
+        Elseif ($PSBoundParameters.ContainsKey('SecuritySDDL')) { If ($Test.Security.ToString() -cne $SecuritySDDL) { $DesiredState = $False } }
         Else { $DesiredState = $True }
     }
     Elseif ($Ensure -eq 'Absent') {
@@ -61,11 +61,11 @@ Function Set-TargetResource {
 
     $Test = Get-WdsInstallImageGroup -Name $ImageGroup -ErrorAction SilentlyContinue
     $Parameters = @{ 'Name' = $ImageGroup }
-    if (!([string]::IsNullOrEmpty($SecuritySDDL))) { $Parameters.Add('SecurityDescriptorSDDL',$SecuritySDDL) }
+    If ($PSBoundParameters.ContainsKey('SecuritySDDL')) { $Parameters.Add('SecurityDescriptorSDDL',$SecuritySDDL) }
 
     If ($Ensure -eq 'Present') {
         If ($Test -eq $Null) { New-WdsInstallImageGroup @Parameters }
-        Elseif (!([string]::IsNullOrEmpty($SecuritySDDL))) { 
+        Elseif ($PSBoundParameters.ContainsKey('SecuritySDDL')) { 
             If ($Test.Security.ToString() -cne $SecuritySDDL) { WdsUtil /Set-ImageGroup /ImageGroup:"$ImageGroup" /Server:Localhost /Security:"$SecuritySDDL" } 
         }
     }
@@ -98,7 +98,7 @@ Function Test-TargetResource {
     
     If ($Ensure -eq 'Present') {
         If ($Test -eq $Null) { Return $False }
-        Elseif (!([string]::IsNullOrEmpty($SecuritySDDL))) { If ($Test.Security.ToString() -cne $SecuritySDDL) { Return $False } }
+        Elseif ($PSBoundParameters.ContainsKey('SecuritySDDL')) { If ($Test.Security.ToString() -cne $SecuritySDDL) { Return $False } }
         Else { Return $True }
     }
     Elseif ($Ensure -eq 'Absent') {

@@ -30,7 +30,7 @@
 
     If ($CurrentDefaultx64ImageType -ne $Hash[$Defaultx64ImageType]) { $DesiredState = $False }
 
-    If (!([string]::IsNullOrEmpty($Defaultx64BootImage))) {
+    If ($PSBoundParameters.ContainsKey('Defaultx64BootImage')) {
         $CurrentBootImage = (($DefaultBootImageConfig.Context.PostContext | Select-String -Pattern "^x64 ") -split ' -').Trim()
         If ($CurrentBootImage.Count -lt 2) { $CurrentBootImage = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentBootImage[1])) { $CurrentBootImage = 'unset'  }
@@ -38,7 +38,7 @@
         If ($CurrentBootImage -ne $Defaultx64BootImage.ToLower()) { $DesiredState = $False }
     }
 
-    If (!([string]::IsNullOrEmpty($Defaultx86BootImage))) {
+    If ($PSBoundParameters.ContainsKey('Defaultx86BootImage')) {
         $CurrentBootImage = (($DefaultBootImageConfig.Context.PostContext | Select-String -Pattern "^x86 ") -split ' -')
         If ($CurrentBootImage.Count -lt 2) { $CurrentBootImage = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentBootImage[1])) { $CurrentBootImage = 'unset'  }
@@ -46,7 +46,7 @@
         If ($CurrentBootImage -ne $Defaultx86BootImage.ToLower()) { $DesiredState = $False }
     }
 
-    If (!([string]::IsNullOrEmpty($Defaultia64BootImage))) {
+    If ($PSBoundParameters.ContainsKey('Defaultia64BootImage')) {
         $CurrentBootImage = (($DefaultBootImageConfig.Context.PostContext | Select-String -Pattern "^ia64 ") -split ' -')
         If ($CurrentBootImage.Count -lt 2) { $CurrentBootImage = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentBootImage[1])) { $CurrentBootImage = 'unset'  }
@@ -94,35 +94,35 @@ Function Set-TargetResource {
 
     If ($CurrentDefaultx64ImageType -ne $Hash[$Defaultx64ImageType]) { WdsUtil /Set-Server /Server:Localhost /DefaultX86X64ImageType:"$Defaultx64ImageType" }
 
-    If (!([string]::IsNullOrEmpty($Defaultx64BootImage))) {
+    If ($PSBoundParameters.ContainsKey('Defaultx64BootImage')) {
         $CurrentBootImage = (($DefaultBootImageConfig.Context.PostContext | Select-String -Pattern "^x64 ") -split ' -').Trim()
         If ($CurrentBootImage.Count -lt 2) { $CurrentBootImage = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentBootImage[1])) { $CurrentBootImage = 'unset'  }
         Else { $CurrentBootImage = [string]$CurrentBootImage[1].Trim() }
         If ($CurrentBootImage -ne $Defaultx64BootImage.ToLower()) { 
-            If ($Defaultx64BootImage.ToLower() -eq 'unset') { WdsUtil /Set-Server /Server:Localhost /BootImage:"" /Architecture:x64 }
+            If ($Defaultx64BootImage.ToLower() -eq 'unset') { WdsUtil /Set-Server /Server:Localhost /BootImage: /Architecture:x64 }
             Else { WdsUtil /Set-Server /Server:Localhost /BootImage:"$Defaultx64BootImage" /Architecture:x64 }
         }
     }
 
-    If (!([string]::IsNullOrEmpty($Defaultx86BootImage))) {
+    If ($PSBoundParameters.ContainsKey('Defaultx86BootImage')) {
         $CurrentBootImage = (($DefaultBootImageConfig.Context.PostContext | Select-String -Pattern "^x86 ") -split ' -')
         If ($CurrentBootImage.Count -lt 2) { $CurrentBootImage = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentBootImage[1])) { $CurrentBootImage = 'unset'  }
         Else { $CurrentBootImage = [string]$CurrentBootImage[1].Trim() }
         If ($CurrentBootImage -ne $Defaultx86BootImage.ToLower()) { 
-            If ($Defaultx86BootImage.ToLower() -eq 'unset') { WdsUtil /Set-Server /Server:Localhost /BootImage:"" /Architecture:x86 }
+            If ($Defaultx86BootImage.ToLower() -eq 'unset') { WdsUtil /Set-Server /Server:Localhost /BootImage: /Architecture:x86 }
             Else { WdsUtil /Set-Server /Server:Localhost /BootImage:"$Defaultx86BootImage" /Architecture:x86 }
         }
     }
 
-    If (!([string]::IsNullOrEmpty($Defaultia64BootImage))) {
+    If ($PSBoundParameters.ContainsKey('Defaultia64BootImage')) {
         $CurrentBootImage = (($DefaultBootImageConfig.Context.PostContext | Select-String -Pattern "^ia64 ") -split ' -')
         If ($CurrentBootImage.Count -lt 2) { $CurrentBootImage = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentBootImage[1])) { $CurrentBootImage = 'unset'  }
         Else { $CurrentBootImage = [string]$CurrentBootImage[1].Trim() }
         If ($CurrentBootImage -ne $Defaultia64BootImage.ToLower()) { 
-            If ($Defaultia64BootImage.ToLower() -eq 'unset') { WdsUtil /Set-Server /Server:Localhost /BootImage:"" /Architecture:ia64 }
+            If ($Defaultia64BootImage.ToLower() -eq 'unset') { WdsUtil /Set-Server /Server:Localhost /BootImage: /Architecture:ia64 }
             Else { WdsUtil /Set-Server /Server:Localhost /BootImage:"$Defaultia64BootImage" /Architecture:ia64 }
         }
     }          
@@ -158,7 +158,7 @@ Function Test-TargetResource {
 
     If ($CurrentDefaultx64ImageType -ne $Hash[$Defaultx64ImageType]) { Return $False }
 
-    If (!([string]::IsNullOrEmpty($Defaultx64BootImage))) {
+    If ($PSBoundParameters.ContainsKey('Defaultx64BootImage')) {
         $CurrentBootImage = (($DefaultBootImageConfig.Context.PostContext | Select-String -Pattern "^x64 ") -split ' -').Trim()
         If ($CurrentBootImage.Count -lt 2) { $CurrentBootImage = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentBootImage[1])) { $CurrentBootImage = 'unset'  }
@@ -166,7 +166,7 @@ Function Test-TargetResource {
         If ($CurrentBootImage -ne $Defaultx64BootImage.ToLower()) { Return $False }
     }
 
-    If (!([string]::IsNullOrEmpty($Defaultx86BootImage))) {
+    If ($PSBoundParameters.ContainsKey('Defaultx86BootImage')) {
         $CurrentBootImage = (($DefaultBootImageConfig.Context.PostContext | Select-String -Pattern "^x86 ") -split ' -')
         If ($CurrentBootImage.Count -lt 2) { $CurrentBootImage = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentBootImage[1])) { $CurrentBootImage = 'unset'  }
@@ -174,7 +174,7 @@ Function Test-TargetResource {
         If ($CurrentBootImage -ne $Defaultx86BootImage.ToLower()) { Return $False }
     }
 
-    If (!([string]::IsNullOrEmpty($Defaultia64BootImage))) {
+    If ($PSBoundParameters.ContainsKey('Defaultia64BootImage')) {
         $CurrentBootImage = (($DefaultBootImageConfig.Context.PostContext | Select-String -Pattern "^ia64 ") -split ' -')
         If ($CurrentBootImage.Count -lt 2) { $CurrentBootImage = 'unset' }
         Elseif ([string]::IsNullOrEmpty($CurrentBootImage[1])) { $CurrentBootImage = 'unset'  }

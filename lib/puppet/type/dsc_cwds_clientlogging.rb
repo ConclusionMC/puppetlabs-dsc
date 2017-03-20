@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_cwds_clientlogging) do
   @doc = %q{
     The DSC cWDS_ClientLogging resource type.
     Automatically generated from
-    'custom_dsc_modules/cWDS/DSCResources/cWDS_ClientLogging/cWDS_ClientLogging.schema.mof'
+    'cWDS/DSCResources/cWDS_ClientLogging/cWDS_ClientLogging.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.

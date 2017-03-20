@@ -15,18 +15,17 @@
 
     )
 
-    $WDSServerFQDN = [System.Net.Dns]::GetHostEntry([string]$env:computername).HostName
-    $WDSConfig = wdsutil /Get-Server /Server:"$WDSServerFQDN" /Show:Config
-    $SearchString = "CONFIGURATION INFORMATION FOR SERVER $WDSServerFQDN"
+    $WDSConfig = WdsUtil /Get-Server /Show:Config
+    $OperationalMode = (($WDSConfig | Select-String -Pattern 'WDS operational mode') -split ': ')[1].Trim()
 
     If ($Ensure -eq 'Present') {
-        If ($WDSConfig.ToLower().Contains($SearchString.ToLower())) { $DesiredState = $True }
-        Else { $DesiredState = $False } 
+        If ($OperationalMode -eq 'Not Configured') { $DesiredState = $False }
+        Else { $DesiredState = $True } 
     }
 
     Elseif ($Ensure -eq 'Absent') {
-        If ($WDSConfig.ToLower().Contains($SearchString.ToLower())) { $DesiredState = $False }
-        Else { $DesiredState = $True } 
+        If ($OperationalMode -eq 'Not Configured') { $DesiredState = $True }
+        Else { $DesiredState = $False } 
     }
     
     Return @{  
@@ -74,17 +73,16 @@ Function Test-TargetResource {
 
     )
 
-    $WDSServerFQDN = [System.Net.Dns]::GetHostEntry([string]$env:computername).HostName
-    $WDSConfig = wdsutil /Get-Server /Server:"$WDSServerFQDN" /Show:Config
-    $SearchString = "CONFIGURATION INFORMATION FOR SERVER $WDSServerFQDN"
+    $WDSConfig = WdsUtil /Get-Server /Show:Config
+    $OperationalMode = (($WDSConfig | Select-String -Pattern 'WDS operational mode') -split ': ')[1].Trim()
 
     If ($Ensure -eq 'Present') {
-        If ($WDSConfig.ToLower().Contains($SearchString.ToLower())) { Return $True }
-        Else { Return $False } 
+        If ($OperationalMode -eq 'Not Configured') { Return $False }
+        Else { Return $True } 
     }
 
     Elseif ($Ensure -eq 'Absent') {
-        If ($WDSConfig.ToLower().Contains($SearchString.ToLower())) { Return $False }
-        Else { Return $True } 
+        If ($OperationalMode -eq 'Not Configured') {  Return $True }
+        Else { Return $False } 
     }
 }
