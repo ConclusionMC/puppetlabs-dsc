@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_cwds_setdrivergroupfilter) do
   @doc = %q{
     The DSC cWDS_SetDriverGroupFilter resource type.
     Automatically generated from
-    'cWDS/DSCResources/cWDS_SetDriverGroupFilter/cWDS_SetDriverGroupFilter.schema.mof'
+    'custom_dsc_modules/cWDS/DSCResources/cWDS_SetDriverGroupFilter/cWDS_SetDriverGroupFilter.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.
@@ -27,7 +27,7 @@ Puppet::Type.newtype(:dsc_cwds_setdrivergroupfilter) do
   def dscmeta_resource_friendly_name; 'cWDS_SetDriverGroupFilter' end
   def dscmeta_resource_name; 'cWDS_SetDriverGroupFilter' end
   def dscmeta_module_name; 'cWDS' end
-  def dscmeta_module_version; '1.0' end
+  def dscmeta_module_version; '1.1' end
 
   newparam(:name, :namevar => true ) do
   end
@@ -70,14 +70,14 @@ Puppet::Type.newtype(:dsc_cwds_setdrivergroupfilter) do
     end
   end
 
-  # Name:         SetFilters
+  # Name:         Filters
   # Type:         string[]
   # IsMandatory:  False
   # Values:       None
-  newparam(:dsc_setfilters, :array_matching => :all) do
+  newparam(:dsc_filters, :array_matching => :all) do
     def mof_type; 'string[]' end
     def mof_is_embedded?; false end
-    desc "SetFilters"
+    desc "Filters"
     validate do |value|
       unless value.kind_of?(Array) || value.kind_of?(String)
         fail("Invalid value '#{value}'. Should be a string or an array of strings")

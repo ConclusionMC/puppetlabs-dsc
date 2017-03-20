@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_cwds_initialize) do
   @doc = %q{
     The DSC cWDS_Initialize resource type.
     Automatically generated from
-    'cWDS/DSCResources/cWDS_Initialize/cWDS_Initialize.schema.mof'
+    'custom_dsc_modules/cWDS/DSCResources/cWDS_Initialize/cWDS_Initialize.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.
@@ -27,7 +27,7 @@ Puppet::Type.newtype(:dsc_cwds_initialize) do
   def dscmeta_resource_friendly_name; 'cWDS_Initialize' end
   def dscmeta_resource_name; 'cWDS_Initialize' end
   def dscmeta_module_name; 'cWDS' end
-  def dscmeta_module_version; '1.0' end
+  def dscmeta_module_version; '1.1' end
 
   newparam(:name, :namevar => true ) do
   end

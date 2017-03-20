@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_cuser_passwordreq) do
   @doc = %q{
     The DSC cUser_Passwordreq resource type.
     Automatically generated from
-    'cUser_Passwordreq/DSCResources/cUser_Passwordreq/cUser_Passwordreq.schema.mof'
+    'custom_dsc_modules/cUser_Passwordreq/DSCResources/cUser_Passwordreq/cUser_Passwordreq.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.

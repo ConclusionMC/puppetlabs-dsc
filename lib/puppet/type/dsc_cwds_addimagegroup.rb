@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_cwds_addimagegroup) do
   @doc = %q{
     The DSC cWDS_AddImageGroup resource type.
     Automatically generated from
-    'cWDS/DSCResources/cWDS_AddImageGroup/cWDS_AddImageGroup.schema.mof'
+    'custom_dsc_modules/cWDS/DSCResources/cWDS_AddImageGroup/cWDS_AddImageGroup.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.
@@ -27,7 +27,7 @@ Puppet::Type.newtype(:dsc_cwds_addimagegroup) do
   def dscmeta_resource_friendly_name; 'cWDS_AddImageGroup' end
   def dscmeta_resource_name; 'cWDS_AddImageGroup' end
   def dscmeta_module_name; 'cWDS' end
-  def dscmeta_module_version; '1.0' end
+  def dscmeta_module_version; '1.1' end
 
   newparam(:name, :namevar => true ) do
   end
