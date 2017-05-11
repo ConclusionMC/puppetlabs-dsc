@@ -1,0 +1,1 @@
+#pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/puppetlabs-dsc/build/qualifiers/base/MSFT_Qualifiers.mof")
