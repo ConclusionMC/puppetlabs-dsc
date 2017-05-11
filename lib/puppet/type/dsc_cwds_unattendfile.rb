@@ -208,6 +208,69 @@ Puppet::Type.newtype(:dsc_cwds_unattendfile) do
     end
   end
 
+  # Name:         Autologon_User
+  # Type:         string
+  # IsMandatory:  False
+  # Values:       None
+  newparam(:dsc_autologon_user) do
+    def mof_type; 'string' end
+    def mof_is_embedded?; false end
+    desc "Autologon_User"
+    validate do |value|
+      unless value.kind_of?(String)
+        fail("Invalid value '#{value}'. Should be a string")
+      end
+    end
+  end
+
+  # Name:         Autologon_Domain
+  # Type:         string
+  # IsMandatory:  False
+  # Values:       None
+  newparam(:dsc_autologon_domain) do
+    def mof_type; 'string' end
+    def mof_is_embedded?; false end
+    desc "Autologon_Domain"
+    validate do |value|
+      unless value.kind_of?(String)
+        fail("Invalid value '#{value}'. Should be a string")
+      end
+    end
+  end
+
+  # Name:         Autologon_Password
+  # Type:         string
+  # IsMandatory:  False
+  # Values:       None
+  newparam(:dsc_autologon_password) do
+    def mof_type; 'string' end
+    def mof_is_embedded?; false end
+    desc "Autologon_Password"
+    validate do |value|
+      unless value.kind_of?(String)
+        fail("Invalid value '#{value}'. Should be a string")
+      end
+    end
+  end
+
+  # Name:         Autologon_Count
+  # Type:         uint32
+  # IsMandatory:  False
+  # Values:       None
+  newparam(:dsc_autologon_count) do
+    def mof_type; 'uint32' end
+    def mof_is_embedded?; false end
+    desc "Autologon_Count"
+    validate do |value|
+      unless (value.kind_of?(Numeric) && value >= 0) || (value.to_i.to_s == value && value.to_i >= 0)
+          fail("Invalid value #{value}. Should be a unsigned Integer")
+      end
+    end
+    munge do |value|
+      PuppetX::Dsc::TypeHelpers.munge_integer(value)
+    end
+  end
+
   # Name:         Administrator_Password
   # Type:         string
   # IsMandatory:  False
