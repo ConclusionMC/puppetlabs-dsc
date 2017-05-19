@@ -41,7 +41,7 @@
     If (-not (Test-Path "$BamDir\$BatchFile")){ $DesiredState = $False }
     Else { $Content = Get-Content -Path "$BamDir\$BatchFile" }
 
-    $Configuration = $PSBoundParameters.GetEnumerator() | ? { $_.Key -notmatch 'BatchFile' -and $_.Key -notmatch 'Template' }
+    $Configuration = @{}
 
     $Commands = @{
         Auth_Server = 'SET NS_AUTHENTICATION_PROVIDER_ADRES='
@@ -52,16 +52,20 @@
         JMS_Address = 'SET NS_JMS_ADRES='
         JRE_Home = 'SET JRE_HOME='
     }
+    
+    Foreach ($Command in $Commands.GetEnumerator()) {
 
-    Foreach ($Config in $Configuration) {
+        If ($PSBoundParameters.ContainsKey($Command.Key)) {
 
-        $Command = $Commands[$Config.Key]
-        $Matches = $Content | Select-String -Pattern $Command
-
-        Foreach ($Match in $Matches) {
-            $CurrentConfig = ($Match.Line -Split '=')[1]
-            If ($CurrentConfig -ne $Config.Value) { $DesiredState = $False }
-        }        
+            $RequiredValue = $PSBoundParameters[$Command.Key]
+            $Matches = $Content | Select-String -Pattern $Command.Value
+            If ($Matches -eq $Null) { Write-Error "No entry for '$($Command.Key)' could be found." ; Continue }
+            
+            Foreach ($Match in $Matches) {
+                $CurrentConfig = ($Match.Line -Split '=')[1]
+                If ($CurrentConfig -ne $RequiredValue) { $DesiredState = $False }
+            }
+        }
     }
 
     Return @{  
@@ -119,8 +123,7 @@ Function Set-TargetResource {
     If (-not (Test-Path "$BamDir\$BatchFile")){ New-Item -Path "$BamDir\$BatchFile" -ItemType File ; $Content = $Template }
     Else { $Content = Get-Content -Path "$BamDir\$BatchFile" }
 
-    $Update = $False
-    $Configuration = $PSBoundParameters.GetEnumerator() | ? { $_.Key -notmatch 'BatchFile' -and $_.Key -notmatch 'Template' }
+    $Update = $False    
 
     $Commands = @{
         Auth_Server = 'SET NS_AUTHENTICATION_PROVIDER_ADRES='
@@ -132,17 +135,18 @@ Function Set-TargetResource {
         JRE_Home = 'SET JRE_HOME='
     }
 
-    Foreach ($Config in $Configuration) {
+    Foreach ($Command in $Commands.GetEnumerator()) {
 
-        $Command = $Commands[$Config.Key]
-        $Matches = $Content | Select-String -Pattern $Command
-        If ($Matches -eq $Null) { Write-Error "No entry for '$($Config.Key)' could be found." ; Continue }
-        Else {
+        If ($PSBoundParameters.ContainsKey($Command.Key)) {
 
+            $RequiredValue = $PSBoundParameters[$Command.Key]
+            $Matches = $Content | Select-String -Pattern $Command.Value
+            If ($Matches -eq $Null) { Write-Error "No entry for '$($Command.Key)' could be found." ; Continue }
+            
             Foreach ($Match in $Matches) {
                 $CurrentConfig = ($Match.Line -Split '=')[1]
-                If ($CurrentConfig -ne $Config.Value) {
-                    $Content[($Match.LineNumber - 1)] = "$Command$($Config.Value)"
+                If ($CurrentConfig -ne $RequiredValue) {
+                    $Content[($Match.LineNumber - 1)] = "$($Command.Value)${RequiredValue}"
                     $Update = $True
                 }
             }
@@ -192,8 +196,6 @@ Function Test-TargetResource {
     If (-not (Test-Path "$BamDir\$BatchFile")){ Return $False }
     Else { $Content = Get-Content -Path "$BamDir\$BatchFile" }
 
-    $Configuration = $PSBoundParameters.GetEnumerator() | ? { $_.Key -notmatch 'BatchFile' -and $_.Key -notmatch 'Template' }
-
     $Commands = @{
         Auth_Server = 'SET NS_AUTHENTICATION_PROVIDER_ADRES='
         Defect_Server = 'SET NS_DEFECTENOVERZICHT_ADRES='
@@ -204,16 +206,19 @@ Function Test-TargetResource {
         JRE_Home = 'SET JRE_HOME='
     }
 
-    Foreach ($Config in $Configuration) {
+    Foreach ($Command in $Commands.GetEnumerator()) {
 
-        $Command = $Commands[$Config.Key]
-        $Matches = $Content | Select-String -Pattern $Command
+        If ($PSBoundParameters.ContainsKey($Command.Key)) {
 
-        Foreach ($Match in $Matches) {
-            $CurrentConfig = ($Match.Line -Split '=')[1]
-            If ($CurrentConfig -ne $Config.Value) { Return $False }
-        }        
+            $RequiredValue = $PSBoundParameters[$Command.Key]
+            $Matches = $Content | Select-String -Pattern $Command.Value
+            If ($Matches -eq $Null) { Write-Error "No entry for '$($Command.Key)' could be found." ; Continue }
+            
+            Foreach ($Match in $Matches) {
+                $CurrentConfig = ($Match.Line -Split '=')[1]
+                If ($CurrentConfig -ne $RequiredValue) { Return $False }
+            }
+        } Else { Continue }
     }
-
     Return $True
 }
