@@ -18,6 +18,10 @@
         [ValidateNotNullOrEmpty()]
         [string[]]$Users,
 
+        [Parameter(Mandatory=$True)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Domain,
+
         [Parameter(Mandatory=$False)]
         [bool]$DesiredState
 
@@ -65,14 +69,18 @@ Function Set-TargetResource {
         [ValidateNotNullOrEmpty()]
         [string[]]$Users,
 
+        [Parameter(Mandatory=$True)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Domain,
+
         [Parameter(Mandatory=$False)]
         [bool]$DesiredState
 
     )
     
     $GPO = Get-GPO -Name $GpoName
-    $Domain = ("DC=" + (($env:USERDNSDOMAIN -split '\.') -join ',DC=')).ToLower()
-    $ADGPO = [ADSI]"LDAP://CN={$($GPO.Id.guid)},CN=Policies,CN=System,$Domain"
+    $DomainX = ("DC=" + (($Domain -split '\.') -join ',DC=')).ToLower()
+    $ADGPO = [ADSI]"LDAP://CN={$($GPO.Id.guid)},CN=Policies,CN=System,$DomainX"
 
     Foreach ($User in $Users) {
         $CurrentPermissions = $ADGPO.ObjectSecurity.GetAccessRules($true,$false,[System.Security.Principal.NTAccount]) | Where IdentityReference -eq $User | Where ActiveDirectoryRights -eq 'ExtendedRight' | Where ObjectType -eq $ExtendedRight
@@ -115,6 +123,10 @@ Function Test-TargetResource {
         [Parameter(Mandatory=$True)]
         [ValidateNotNullOrEmpty()]
         [string[]]$Users,
+
+        [Parameter(Mandatory=$True)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Domain,
 
         [Parameter(Mandatory=$False)]
         [bool]$DesiredState

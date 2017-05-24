@@ -125,6 +125,21 @@ Puppet::Type.newtype(:dsc_cmc_gpoextendedright) do
     end
   end
 
+  # Name:         Domain
+  # Type:         string
+  # IsMandatory:  False
+  # Values:       None
+  newparam(:dsc_domain) do
+    def mof_type; 'string' end
+    def mof_is_embedded?; false end
+    desc "Domain"
+    validate do |value|
+      unless value.kind_of?(String)
+        fail("Invalid value '#{value}'. Should be a string")
+      end
+    end
+  end
+
   # Name:         DesiredState
   # Type:         boolean
   # IsMandatory:  False
