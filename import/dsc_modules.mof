@@ -1,6 +1,7 @@
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/CMC_Gpo/DSCResources/CMC_Gpo/CMC_Gpo.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/CMC_Gpo/DSCResources/CMC_GpoExtendedRight/CMC_GpoExtendedRight.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/CMC_Gpo/DSCResources/CMC_GpoExtendedRight2/CMC_GpoExtendedRight2.schema.mof")
+#pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/CMC_Gpo/DSCResources/CMC_GpoExtendedRight3/CMC_GpoExtendedRight3.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/CMC_Gpo/DSCResources/CMC_GpoInheritance/CMC_GpoInheritance.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/CMC_Gpo/DSCResources/CMC_GpoLink/CMC_GpoLink.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cBAM/DSCResources/cBAM_BatchFile/cBAM_BatchFile.schema.mof")
