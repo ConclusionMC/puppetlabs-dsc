@@ -3,46 +3,72 @@
     Param(
         
         [Parameter(Mandatory=$True)]
+        [ValidateNotNullOrEmpty()]
         [string]$BatchFile,
 
         [Parameter(Mandatory=$True)]
         [string[]]$Template,
 
+        [Parameter(Mandatory=$True)]
+        [ValidateNotNullOrEmpty()]
+        [string]$StartCommand,
+
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Auth_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Defect_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Conflict_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Plan_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Main_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$JMS_Address,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$JRE_Home,
 
         [Parameter(Mandatory=$False)]
         [bool]$DesiredState
 
-    )
-    
+    )    
+
     $DesiredState = $True
 
-    $BamDir = "$env:ProgramFiles\BAMClient"
+    $Template = $Template -replace '<Blank>',''
 
-    If (-not (Test-Path "$BamDir\$BatchFile")){ $DesiredState = $False }
-    Else { $Content = Get-Content -Path "$BamDir\$BatchFile" }
+    $StartSettings = $Template | Select-String '<Settings>'
+    If ($StartSettings -eq $Null) { Throw "No settings segment could be found in the template. Pleas include the '<Settings>' and '</Settings>' keywords in your template." }
+    Elseif ($StartSettings.Count -gt 1) { Throw "More than one '<Settings>' keyword was found." }
+    $EndSettings = $Template | Select-String '</Settings>'
+    If ($EndSettings -eq $Null) { Throw "No settings segment could be found in the template. Pleas include the '<Settings>' and '</Settings>' keywords in your template." }
+    Elseif ($EndSettings.Count -gt 1) { Throw "More than one '</Settings>' keyword was found." }
+    If ($StartSettings.LineNumber -ge $EndSettings.LineNumber) { Throw "The '</Settings>' keyword can not be on the same line or before the '<Settings>' keyword." }
 
-    $Configuration = @{}
+    $BamDir = 'C:\Program Files\BAMClient'
 
+    If (-not (Test-Path -Path "$BamDir\$BatchFile")) { $FileExists = $False ; $DesiredState = $False ; $CurrentContent = @() }
+    Else { $FileExists = $True ; $CurrentContent = Get-Content "$BamDir\$BatchFile" }
+    
+    $BeforeSettings = $Template[0..($StartSettings.LineNumber - 1)]
+    $AfterSettings = $Template[($EndSettings.LineNumber - 1)..($Template.Count - 1)]
+    If ($AfterSettings[-1] -eq '<StartCommand>') { $AfterSettings[-1] = $StartCommand }
+    Elseif ($AfterSettings[-1].Contains('start "" eclipse.exe') -and ($AfterSettings[-1] -ne $StartCommand)) { $AfterSettings[-1] = $StartCommand }
+    Elseif ($AfterSettings[-1] -ne $StartCommand) { $AfterSettings += $StartCommand }
+    
     $Commands = @{
         Auth_Server = 'SET NS_AUTHENTICATION_PROVIDER_ADRES='
         Defect_Server = 'SET NS_DEFECTENOVERZICHT_ADRES='
@@ -52,32 +78,23 @@
         JMS_Address = 'SET NS_JMS_ADRES='
         JRE_Home = 'SET JRE_HOME='
     }
-    
-    Foreach ($Command in $Commands.GetEnumerator()) {
 
-        If ($PSBoundParameters.ContainsKey($Command.Key)) {
+    $RequiredSettings = @()
+    Foreach ($Command in ($Commands.GetEnumerator() | Sort Key)) { If ($PSBoundParameters.ContainsKey($Command.Key)) { $RequiredSettings += "$($Command.Value)$($PSBoundParameters[$Command.Key])" } }
 
-            $RequiredValue = $PSBoundParameters[$Command.Key]
-            $Matches = $Content | Select-String -Pattern $Command.Value
-            If ($Matches -eq $Null) { Write-Error "No entry for '$($Command.Key)' could be found." ; Continue }
-            
-            Foreach ($Match in $Matches) {
-                $CurrentConfig = ($Match.Line -Split '=')[1]
-                If ($CurrentConfig -ne $RequiredValue) { $DesiredState = $False }
-            }
-        }
+    $RequiredContent = $BeforeSettings + $RequiredSettings + $AfterSettings
+
+    If (($CurrentContent -ne $Null) -and ($CurrentContent.Count -ne 0)) {
+        $Compare = Compare-Object -ReferenceObject $CurrentContent -DifferenceObject $RequiredContent
+        If ($Compare -ne $Null) { $DesiredState = $False }
     }
+    Else { $DesiredState = $False }
 
     Return @{  
-        BatchFile = $BatchFile
-        Template = $Template
-        Auth_Server = $Auth_Server
-        Defect_Server = $Defect_Server
-        Conflict_Server = $Conflict_Server
-        Plan_Server = $Plan_Server
-        Main_Server = $Main_Server
-        JMS_Address = $JMS_Address
-        JRE_Home = $JRE_Home
+        BamDir = $BamDir
+        FileExists = $FileExists
+        CurrentContent = $CurrentContent
+        RequiredContent = $RequiredContent
         DesiredState    = $DesiredState
     }
 }
@@ -87,72 +104,53 @@ Function Set-TargetResource {
     Param(
         
         [Parameter(Mandatory=$True)]
+        [ValidateNotNullOrEmpty()]
         [string]$BatchFile,
 
         [Parameter(Mandatory=$True)]
         [string[]]$Template,
 
+        [Parameter(Mandatory=$True)]
+        [ValidateNotNullOrEmpty()]
+        [string]$StartCommand,
+
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Auth_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Defect_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Conflict_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Plan_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Main_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$JMS_Address,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$JRE_Home,
 
         [Parameter(Mandatory=$False)]
         [bool]$DesiredState
 
-    )
+    )    
 
-    $BamDir = "$env:ProgramFiles\BAMClient"
+    $CurrentState = Get-TargetResource @PSBoundParameters
+    If ($CurrentState.FileExists -eq $False) { $File = New-Item -Path "$($CurrentState.BamDir)\$BatchFile" -Value ($CurrentState.RequiredContent | Out-String) }
+    Else { Set-Content -Path "$($CurrentState.BamDir)\$BatchFile" -Value $CurrentState.RequiredContent }
 
-    If (-not (Test-Path "$BamDir\$BatchFile")){ New-Item -Path "$BamDir\$BatchFile" -ItemType File ; $Content = $Template }
-    Else { $Content = Get-Content -Path "$BamDir\$BatchFile" }
-
-    $Update = $False    
-
-    $Commands = @{
-        Auth_Server = 'SET NS_AUTHENTICATION_PROVIDER_ADRES='
-        Defect_Server = 'SET NS_DEFECTENOVERZICHT_ADRES='
-        Conflict_Server = 'SET NS_CONFLICTSIGNALERING_ADRES='
-        Plan_Server = 'SET NS_PLANSERVER_ADRES='
-        Main_Server = 'SET NS_MAINSERVER_ADRES='
-        JMS_Address = 'SET NS_JMS_ADRES='
-        JRE_Home = 'SET JRE_HOME='
-    }
-
-    Foreach ($Command in $Commands.GetEnumerator()) {
-
-        If ($PSBoundParameters.ContainsKey($Command.Key)) {
-
-            $RequiredValue = $PSBoundParameters[$Command.Key]
-            $Matches = $Content | Select-String -Pattern $Command.Value
-            If ($Matches -eq $Null) { Write-Error "No entry for '$($Command.Key)' could be found." ; Continue }
-            
-            Foreach ($Match in $Matches) {
-                $CurrentConfig = ($Match.Line -Split '=')[1]
-                If ($CurrentConfig -ne $RequiredValue) {
-                    $Content[($Match.LineNumber - 1)] = "$($Command.Value)${RequiredValue}"
-                    $Update = $True
-                }
-            }
-        }
-    }
-    If ($Update) { Set-Content -Path "$BamDir\$BatchFile" -Value $Content }
 }
 
 Function Test-TargetResource {
@@ -160,65 +158,50 @@ Function Test-TargetResource {
     Param(
         
         [Parameter(Mandatory=$True)]
+        [ValidateNotNullOrEmpty()]
         [string]$BatchFile,
 
         [Parameter(Mandatory=$True)]
         [string[]]$Template,
 
+        [Parameter(Mandatory=$True)]
+        [ValidateNotNullOrEmpty()]
+        [string]$StartCommand,
+
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Auth_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Defect_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Conflict_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Plan_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$Main_Server,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$JMS_Address,
 
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string]$JRE_Home,
 
         [Parameter(Mandatory=$False)]
         [bool]$DesiredState
 
-    )
+    )    
 
-    $BamDir = "$env:ProgramFiles\BAMClient"
+    $CurrentState = Get-TargetResource @PSBoundParameters
+    Return $CurrentState.DesiredState
 
-    If (-not (Test-Path "$BamDir\$BatchFile")){ Return $False }
-    Else { $Content = Get-Content -Path "$BamDir\$BatchFile" }
-
-    $Commands = @{
-        Auth_Server = 'SET NS_AUTHENTICATION_PROVIDER_ADRES='
-        Defect_Server = 'SET NS_DEFECTENOVERZICHT_ADRES='
-        Conflict_Server = 'SET NS_CONFLICTSIGNALERING_ADRES='
-        Plan_Server = 'SET NS_PLANSERVER_ADRES='
-        Main_Server = 'SET NS_MAINSERVER_ADRES='
-        JMS_Address = 'SET NS_JMS_ADRES='
-        JRE_Home = 'SET JRE_HOME='
-    }
-
-    Foreach ($Command in $Commands.GetEnumerator()) {
-
-        If ($PSBoundParameters.ContainsKey($Command.Key)) {
-
-            $RequiredValue = $PSBoundParameters[$Command.Key]
-            $Matches = $Content | Select-String -Pattern $Command.Value
-            If ($Matches -eq $Null) { Write-Error "No entry for '$($Command.Key)' could be found." ; Continue }
-            
-            Foreach ($Match in $Matches) {
-                $CurrentConfig = ($Match.Line -Split '=')[1]
-                If ($CurrentConfig -ne $RequiredValue) { Return $False }
-            }
-        } Else { Continue }
-    }
-    Return $True
 }

@@ -88,6 +88,21 @@ Puppet::Type.newtype(:dsc_cbam_batchfile) do
     end
   end
 
+  # Name:         StartCommand
+  # Type:         string
+  # IsMandatory:  False
+  # Values:       None
+  newparam(:dsc_startcommand) do
+    def mof_type; 'string' end
+    def mof_is_embedded?; false end
+    desc "StartCommand"
+    validate do |value|
+      unless value.kind_of?(String)
+        fail("Invalid value '#{value}'. Should be a string")
+      end
+    end
+  end
+
   # Name:         Auth_Server
   # Type:         string
   # IsMandatory:  False
