@@ -30,7 +30,8 @@
     Else { 
         $ZoneExists = $True
         $CurrentMasterServers = $Forwarder.MasterServers.IPAddressToString
-        $DesiredMasterServers = (Compare-Object -ReferenceObject $MasterServers -DifferenceObject $CurrentMasterServers) -eq $Null
+        $Compare = Compare-Object -ReferenceObject $MasterServers -DifferenceObject $CurrentMasterServers
+        $DesiredMasterServers = If ($Compare.Count -eq 0) { $True } Else { $False }
         $CurrentReplicationScope = $Forwarder.ReplicationScope
         $DesiredReplicationScope = $Forwarder.ReplicationScope -eq $ReplicationScope
     }
@@ -43,7 +44,6 @@
 
     Return @{  
         ZoneExists              = $ZoneExists
-        Forwarder               = $Forwarder
         DesiredMasterServers    = $DesiredMasterServers
         CurrentMasterServers    = $CurrentMasterServers
         DesiredReplicationScope = $DesiredReplicationScope
@@ -89,24 +89,24 @@ Function Set-TargetResource {
         }
         Else {
             If ($CurrentState.DesiredReplicationScope -eq $False -and $CurrentState.CurrentReplicationScope -eq 'None') {
-                $CurrentState.Forwarder | Remove-DnsServerZone -Force
+                Remove-DnsServerZone @Parameters -Force
                 $Parameters.Add('MasterServers',$MasterServers)
                 $Parameters.Add('ReplicationScope',$ReplicationScope)
                 Add-DnsServerConditionalForwarderZone @Parameters
             }
             Elseif ($CurrentState.DesiredReplicationScope -eq $False -and $ReplicationScope -eq 'None') {
-                $CurrentState.Forwarder | Remove-DnsServerZone -Force
+                Remove-DnsServerZone @Parameters -Force
                 $Parameters.Add('MasterServers',$MasterServers)
                 Add-DnsServerConditionalForwarderZone @Parameters
             }
             Else {
-                If ($CurrentState.DesiredReplicationScope -eq $False) { $CurrentState.Forwarder | Set-DnsServerConditionalForwarderZone -ReplicationScope $ReplicationScope }
-                If ($CurrentState.DesiredMasterServers -eq $False) { $CurrentState.Forwarder | Set-DnsServerConditionalForwarderZone -MasterServers $MasterServers }
+                If ($CurrentState.DesiredReplicationScope -eq $False) { Set-DnsServerConditionalForwarderZone -ZoneName $ZoneName -ReplicationScope $ReplicationScope }
+                If ($CurrentState.DesiredMasterServers -eq $False) { Set-DnsServerConditionalForwarderZone -ZoneName $ZoneName -MasterServers $MasterServers }
             }
         }
     }
 
-    Else { $CurrentState.Forwarder | Remove-DnsServerZone -Force }
+    Else { Remove-DnsServerZone @Parameters -Force }
 
 }
 
