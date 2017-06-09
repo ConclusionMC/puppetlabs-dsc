@@ -19,7 +19,7 @@
         
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
-        [string]$Option_6,  
+        [string[]]$Option_6,  
 
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
@@ -115,7 +115,7 @@ Function Set-TargetResource {
         
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
-        [string]$Option_6,  
+        [string[]]$Option_6,  
 
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
@@ -145,13 +145,11 @@ Function Set-TargetResource {
     $Parameters = @{}
 
     If ($Level -eq 'Scope') {  
-
         $ScopeID = (Get-DhcpServerv4Scope | Where Name -eq $ScopeName).ScopeId.IPAddressToString
         $Parameters.Add('ScopeId',$ScopeID)
     }
 
     If ($Level -eq 'Reservation') { 
-
         $Parameters.Add('ReservedIP',$ReservedIP)
     }
 
@@ -160,15 +158,17 @@ Function Set-TargetResource {
     $Options | % { If ($PSBoundParameters.ContainsKey("Option_$_")) { $SetOptions += $_ } }
 
     Foreach ($Option in $SetOptions) {
-
         $CurrentValue = (Get-DhcpServerv4OptionValue @Parameters -OptionId $Option -ErrorAction SilentlyContinue).Value
         $RequiredValue = (Get-Variable -Name "Option_$Option").Value
-        $IsSet = !([string]::IsNullOrEmpty($CurrentValue))        
-        If (($IsSet -eq $True -AND $RequiredValue -ne $CurrentValue) -OR $IsSet -eq $False) { Set-DhcpServerv4OptionValue @Parameters -OptionId $Option -Value $RequiredValue }
+        $IsSet = !([string]::IsNullOrEmpty($CurrentValue))
+        If ($IsSet -eq $True -and $RequiredValue -is [array]) {
+            $Comparison = Compare-Object -ReferenceObject $RequiredValue -DifferenceObject $CurrentValue
+            If ($Comparison -ne $Null) { Set-DhcpServerv4OptionValue @Parameters -OptionId $Option -Value $RequiredValue -Force }
+        }
+        Elseif ($RequiredValue -ne $CurrentValue -or $IsSet -eq $False) { Set-DhcpServerv4OptionValue @Parameters -OptionId $Option -Value $RequiredValue }
     }    
     
     If ($Purge -eq $True) {
-        
         $CurrentSetOptions = (Get-DhcpServerv4OptionValue @Parameters | Where OptionId -in $Options).OptionId
         $ToRemove = (Compare-Object -ReferenceObject $CurrentSetOptions -DifferenceObject $SetOptions | Where SideIndicator -eq '<=').InputObject        
         If ($ToRemove -ne $Null) { $ToRemove | % { Remove-DhcpServerv4OptionValue @Parameters -OptionId $_ } }
@@ -196,7 +196,7 @@ Function Test-TargetResource {
         
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
-        [string]$Option_6,  
+        [string[]]$Option_6,  
 
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
@@ -226,37 +226,34 @@ Function Test-TargetResource {
     $Parameters = @{}
 
     If ($Level -eq 'Scope') {  
-        
-        If ($PSBoundParameters.ContainsKey('ScopeName') -eq $False){ Throw "ScopeName parameter must be provided if Level is set to Scope." }
         $ScopeID = (Get-DhcpServerv4Scope | Where Name -eq $ScopeName).ScopeId.IPAddressToString
-        If ($ScopeID -eq $Null) { Throw "Scope '$ScopeName' could not be found." }
         $Parameters.Add('ScopeId',$ScopeID)
     }
 
     If ($Level -eq 'Reservation') { 
-
-        If ($PSBoundParameters.ContainsKey('ReservedIP') -eq $False){ Throw "ReservedIP parameter must be provided if Level is set to Reservation." }
         $Parameters.Add('ReservedIP',$ReservedIP)
     }
 
     $SetOptions = @()
     $Options = 3,6,15,66,67
-    $Options | % { If ($PSBoundParameters.ContainsKey("Option_$($_)")) { $SetOptions += $_ } }
-    
-    Foreach ($Option in $SetOptions) {
+    $Options | % { If ($PSBoundParameters.ContainsKey("Option_$_")) { $SetOptions += $_ } }
 
+    Foreach ($Option in $SetOptions) {
         $CurrentValue = (Get-DhcpServerv4OptionValue @Parameters -OptionId $Option -ErrorAction SilentlyContinue).Value
         $RequiredValue = (Get-Variable -Name "Option_$Option").Value
-        $IsSet = !([string]::IsNullOrEmpty($CurrentValue))        
-        If (($IsSet -eq $True -AND $RequiredValue -ne $CurrentValue) -OR $IsSet -eq $False) { Return $False }
-    }
+        $IsSet = !([string]::IsNullOrEmpty($CurrentValue))
+        If ($IsSet -eq $True -and $RequiredValue -is [array]) {
+            $Comparison = Compare-Object -ReferenceObject $RequiredValue -DifferenceObject $CurrentValue
+            If ($Comparison -ne $Null) { Return $False }
+        }
+        Elseif ($RequiredValue -ne $CurrentValue -or $IsSet -eq $False) { Return $False }
+    }    
     
     If ($Purge -eq $True) {
-        
         $CurrentSetOptions = (Get-DhcpServerv4OptionValue @Parameters | Where OptionId -in $Options).OptionId
         $ToRemove = (Compare-Object -ReferenceObject $CurrentSetOptions -DifferenceObject $SetOptions | Where SideIndicator -eq '<=').InputObject        
         If ($ToRemove -ne $Null) { Return $False }
-    } 
+    }    
 
     Return $True
 }

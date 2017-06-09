@@ -120,17 +120,20 @@ Puppet::Type.newtype(:dsc_cdhcp_options) do
   end
 
   # Name:         Option_6
-  # Type:         string
+  # Type:         string[]
   # IsMandatory:  False
   # Values:       None
-  newparam(:dsc_option_6) do
-    def mof_type; 'string' end
+  newparam(:dsc_option_6, :array_matching => :all) do
+    def mof_type; 'string[]' end
     def mof_is_embedded?; false end
     desc "Option_6"
     validate do |value|
-      unless value.kind_of?(String)
-        fail("Invalid value '#{value}'. Should be a string")
+      unless value.kind_of?(Array) || value.kind_of?(String)
+        fail("Invalid value '#{value}'. Should be a string or an array of strings")
       end
+    end
+    munge do |value|
+      Array(value)
     end
   end
 
