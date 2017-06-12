@@ -11,6 +11,7 @@
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cChoco/DSCResources/cChocoSource/cChocoSource.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cComputer/DSCResources/cComputer/cComputer.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cDHCP/DSCResources/cDHCP_Authorize/cDHCP_Authorize.schema.mof")
+#pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cDHCP/DSCResources/cDHCP_Failover/cDHCP_Failover.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cDHCP/DSCResources/cDHCP_Options/cDHCP_Options.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cDHCP/DSCResources/cDHCP_Options2/cDHCP_Options2.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cDHCP/DSCResources/cDHCP_Reservation/cDHCP_Reservation.schema.mof")
