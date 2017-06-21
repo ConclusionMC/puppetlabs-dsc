@@ -19,6 +19,7 @@
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cDHCP/DSCResources/cDHCP_SecurityGroup/cDHCP_SecurityGroup.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cDns/DSCResources/cDns_ConditionalForwarder/cDns_ConditionalForwarder.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cDns/DSCResources/cDns_ConditionalForwarder2/cDns_ConditionalForwarder2.schema.mof")
+#pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_LocalGroup/cMisc_LocalGroup.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_Passwordreq/cMisc_Passwordreq.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_Rename_Interface/cMisc_Rename_Interface.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_SetIPv6/cMisc_SetIPv6.schema.mof")
