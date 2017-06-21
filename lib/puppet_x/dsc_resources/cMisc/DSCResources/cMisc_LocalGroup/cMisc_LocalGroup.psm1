@@ -35,7 +35,7 @@
             If ($PSBoundParameters.ContainsKey('Members')) {
                 $CurrentGroup = Invoke-Expression -Command "net localgroup $Group"
                 $CurrentMembers = ($CurrentGroup[($CurrentGroup | Select-String -Pattern '---').LineNumber..($CurrentGroup.Count - 2)]).Trim().Where{ $_ -notmatch 'the command' }
-                If ((Get-WindowsFeature -Name 'AD-Domain-Services').InstallState -eq 'Installed') {
+                If ((Get-WindowsFeature -Name 'AD-Domain-Services' -Verbose:$False).InstallState -eq 'Installed') {
                     $Members = $Members.Replace("$env:USERDOMAIN\",'')
                     $CurrentMembers = $CurrentMembers.Replace("$env:USERDOMAIN\",'')
                 }
@@ -93,8 +93,18 @@ Function Set-TargetResource {
 
     If ($Ensure -eq 'Present') {
         If ($CurrentState.CreateGroup -eq $True) { net localgroup $Group /add  }
-        If ($CurrentState.MembersToAdd.Count -gt 0) { Foreach ($Member in $Result.MembersToAdd) { net localgroup $Group $Member /add ; Start-Sleep -Milliseconds 100 } }
-        If ($CurrentState.MembersToRemove.Count -gt 0) { Foreach ($Member in $Result.MembersToRemove) { net localgroup $Group $Member /delete ; Start-Sleep -Milliseconds 100 } }
+        If ($CurrentState.MembersToAdd.Count -gt 0) { 
+            Foreach ($Member in $CurrentState.MembersToAdd) {
+                Write-Verbose "Adding $Member to $Group"
+                net localgroup $Group $Member /add ; Start-Sleep -Milliseconds 100 
+            } 
+        }
+        If ($CurrentState.MembersToRemove.Count -gt 0) { 
+            Foreach ($Member in $CurrentState.MembersToRemove) {
+                Write-Verbose "Removing $Member from $Group" 
+                net localgroup $Group $Member /delete ; Start-Sleep -Milliseconds 100 
+            } 
+        }
     }
 
     If ($Ensure -eq 'Absent') {
