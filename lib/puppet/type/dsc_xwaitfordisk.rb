@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_xwaitfordisk) do
   @doc = %q{
     The DSC xWaitForDisk resource type.
     Automatically generated from
-    'xStorage/DSCResources/MSFT_xWaitForDisk/MSFT_xWaitForDisk.schema.mof'
+    'xDisk/DSCResources/MSFT_xWaitForDisk/MSFT_xWaitForDisk.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.
@@ -26,8 +26,8 @@ Puppet::Type.newtype(:dsc_xwaitfordisk) do
 
   def dscmeta_resource_friendly_name; 'xWaitForDisk' end
   def dscmeta_resource_name; 'MSFT_xWaitForDisk' end
-  def dscmeta_module_name; 'xStorage' end
-  def dscmeta_module_version; '2.8.0.0' end
+  def dscmeta_module_name; 'xDisk' end
+  def dscmeta_module_version; '1.0' end
 
   newparam(:name, :namevar => true ) do
   end
@@ -61,7 +61,7 @@ Puppet::Type.newtype(:dsc_xwaitfordisk) do
   newparam(:dsc_disknumber) do
     def mof_type; 'uint32' end
     def mof_is_embedded?; false end
-    desc "DiskNumber - Specifies the identifier for which disk to wait for."
+    desc "DiskNumber"
     isrequired
     validate do |value|
       unless (value.kind_of?(Numeric) && value >= 0) || (value.to_i.to_s == value && value.to_i >= 0)
@@ -74,13 +74,13 @@ Puppet::Type.newtype(:dsc_xwaitfordisk) do
   end
 
   # Name:         RetryIntervalSec
-  # Type:         uint32
+  # Type:         uint64
   # IsMandatory:  False
   # Values:       None
   newparam(:dsc_retryintervalsec) do
-    def mof_type; 'uint32' end
+    def mof_type; 'uint64' end
     def mof_is_embedded?; false end
-    desc "RetryIntervalSec - Specifies the number of seconds to wait for the disk to become available."
+    desc "RetryIntervalSec"
     validate do |value|
       unless (value.kind_of?(Numeric) && value >= 0) || (value.to_i.to_s == value && value.to_i >= 0)
           fail("Invalid value #{value}. Should be a unsigned Integer")
@@ -98,7 +98,7 @@ Puppet::Type.newtype(:dsc_xwaitfordisk) do
   newparam(:dsc_retrycount) do
     def mof_type; 'uint32' end
     def mof_is_embedded?; false end
-    desc "RetryCount - The number of times to loop the retry interval while waiting for the disk."
+    desc "RetryCount"
     validate do |value|
       unless (value.kind_of?(Numeric) && value >= 0) || (value.to_i.to_s == value && value.to_i >= 0)
           fail("Invalid value #{value}. Should be a unsigned Integer")

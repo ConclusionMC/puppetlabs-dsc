@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_xdisk) do
   @doc = %q{
     The DSC xDisk resource type.
     Automatically generated from
-    'xStorage/DSCResources/MSFT_xDisk/MSFT_xDisk.schema.mof'
+    'xDisk/DSCResources/MSFT_xDisk/MSFT_xDisk.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.
@@ -21,13 +21,13 @@ Puppet::Type.newtype(:dsc_xdisk) do
   }
 
   validate do
-      fail('dsc_driveletter is a required attribute') if self[:dsc_driveletter].nil?
+      fail('dsc_disknumber is a required attribute') if self[:dsc_disknumber].nil?
     end
 
   def dscmeta_resource_friendly_name; 'xDisk' end
   def dscmeta_resource_name; 'MSFT_xDisk' end
-  def dscmeta_module_name; 'xStorage' end
-  def dscmeta_module_version; '2.8.0.0' end
+  def dscmeta_module_name; 'xDisk' end
+  def dscmeta_module_version; '1.0' end
 
   newparam(:name, :namevar => true ) do
   end
@@ -54,30 +54,15 @@ Puppet::Type.newtype(:dsc_xdisk) do
     end
   end
 
-  # Name:         DriveLetter
-  # Type:         string
-  # IsMandatory:  True
-  # Values:       None
-  newparam(:dsc_driveletter) do
-    def mof_type; 'string' end
-    def mof_is_embedded?; false end
-    desc "DriveLetter - Specifies the identifier for which disk to modify."
-    isrequired
-    validate do |value|
-      unless value.kind_of?(String)
-        fail("Invalid value '#{value}'. Should be a string")
-      end
-    end
-  end
-
   # Name:         DiskNumber
   # Type:         uint32
-  # IsMandatory:  False
+  # IsMandatory:  True
   # Values:       None
   newparam(:dsc_disknumber) do
     def mof_type; 'uint32' end
     def mof_is_embedded?; false end
-    desc "DiskNumber - Specifies the disk number for which disk to modify."
+    desc "DiskNumber"
+    isrequired
     validate do |value|
       unless (value.kind_of?(Numeric) && value >= 0) || (value.to_i.to_s == value && value.to_i >= 0)
           fail("Invalid value #{value}. Should be a unsigned Integer")
@@ -88,71 +73,17 @@ Puppet::Type.newtype(:dsc_xdisk) do
     end
   end
 
-  # Name:         Size
-  # Type:         uint64
-  # IsMandatory:  False
-  # Values:       None
-  newparam(:dsc_size) do
-    def mof_type; 'uint64' end
-    def mof_is_embedded?; false end
-    desc "Size - Specifies the size of new volume."
-    validate do |value|
-      unless (value.kind_of?(Numeric) && value >= 0) || (value.to_i.to_s == value && value.to_i >= 0)
-          fail("Invalid value #{value}. Should be a unsigned Integer")
-      end
-    end
-    munge do |value|
-      PuppetX::Dsc::TypeHelpers.munge_integer(value)
-    end
-  end
-
-  # Name:         FSLabel
+  # Name:         DriveLetter
   # Type:         string
   # IsMandatory:  False
   # Values:       None
-  newparam(:dsc_fslabel) do
+  newparam(:dsc_driveletter) do
     def mof_type; 'string' end
     def mof_is_embedded?; false end
-    desc "FSLabel - Define volume label if required."
+    desc "DriveLetter"
     validate do |value|
       unless value.kind_of?(String)
         fail("Invalid value '#{value}'. Should be a string")
-      end
-    end
-  end
-
-  # Name:         AllocationUnitSize
-  # Type:         uint32
-  # IsMandatory:  False
-  # Values:       None
-  newparam(:dsc_allocationunitsize) do
-    def mof_type; 'uint32' end
-    def mof_is_embedded?; false end
-    desc "AllocationUnitSize - Specifies the allocation unit size to use when formatting the volume."
-    validate do |value|
-      unless (value.kind_of?(Numeric) && value >= 0) || (value.to_i.to_s == value && value.to_i >= 0)
-          fail("Invalid value #{value}. Should be a unsigned Integer")
-      end
-    end
-    munge do |value|
-      PuppetX::Dsc::TypeHelpers.munge_integer(value)
-    end
-  end
-
-  # Name:         FSFormat
-  # Type:         string
-  # IsMandatory:  False
-  # Values:       ["NTFS", "ReFS"]
-  newparam(:dsc_fsformat) do
-    def mof_type; 'string' end
-    def mof_is_embedded?; false end
-    desc "FSFormat - Specifies the file system format of the new volume. Valid values are NTFS, ReFS."
-    validate do |value|
-      unless value.kind_of?(String)
-        fail("Invalid value '#{value}'. Should be a string")
-      end
-      unless ['NTFS', 'ntfs', 'ReFS', 'refs'].include?(value)
-        fail("Invalid value '#{value}'. Valid values are NTFS, ReFS")
       end
     end
   end
