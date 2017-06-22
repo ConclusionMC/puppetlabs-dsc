@@ -9,7 +9,7 @@
         [Parameter(Mandatory=$True)]
         [string[]]$Template,
 
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
         [string]$InstallDir = 'D:\Apps\BAMClient',
 
@@ -117,7 +117,7 @@ Function Set-TargetResource {
         [Parameter(Mandatory=$True)]
         [string[]]$Template,
 
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
         [string]$InstallDir = 'D:\Apps\BAMClient',
 
@@ -175,7 +175,7 @@ Function Test-TargetResource {
         [Parameter(Mandatory=$True)]
         [string[]]$Template,
 
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
         [string]$InstallDir = 'D:\Apps\BAMClient',
 
