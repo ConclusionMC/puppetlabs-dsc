@@ -96,13 +96,25 @@ Function Set-TargetResource {
         If ($CurrentState.MembersToAdd.Count -gt 0) { 
             Foreach ($Member in $CurrentState.MembersToAdd) {
                 Write-Verbose "Adding $Member to $Group"
-                net localgroup $Group $Member /add ; Start-Sleep -Milliseconds 100 
+                If ($Member.Length -ge 20) { 
+                    If ($Member.Contains('\')) { $Domain = $Member.Split('\')[0] ; $UserOrGroup = $Member.Split('\')[1] }
+                    Else { $Domain = '.' ; $UserOrGroup = $Member } 
+                    ([adsi]"WinNT://./$Group,group").Add("WinNT://$Domain/$UserOrGroup,user") 
+                }
+                Else { net localgroup $Group $Member /add }
+                Start-Sleep -Milliseconds 100 
             } 
         }
         If ($CurrentState.MembersToRemove.Count -gt 0) { 
             Foreach ($Member in $CurrentState.MembersToRemove) {
                 Write-Verbose "Removing $Member from $Group" 
-                net localgroup $Group $Member /delete ; Start-Sleep -Milliseconds 100 
+                If ($Member.Length -ge 20) { 
+                    If ($Member.Contains('\')) { $Domain = $Member.Split('\')[0] ; $UserOrGroup = $Member.Split('\')[1] }
+                    Else { $Domain = '.' ; $UserOrGroup = $Member } 
+                    ([adsi]"WinNT://./$Group,group").Remove("WinNT://$Domain/$UserOrGroup,user") 
+                }
+                Else { net localgroup $Group $Member /add }
+                Start-Sleep -Milliseconds 100 
             } 
         }
     }
