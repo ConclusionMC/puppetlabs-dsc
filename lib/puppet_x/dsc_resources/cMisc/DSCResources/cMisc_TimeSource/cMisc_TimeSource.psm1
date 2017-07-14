@@ -7,7 +7,7 @@
         [string]$SyncFromFlags,
         
         [Parameter(Mandatory=$False)]
-        [ValidateNotNullOrEmpy()]
+        [ValidateNotNullOrEmpty()]
         [string[]]$Sources
 
     )
@@ -20,18 +20,22 @@
     }
 
     $Result = @{ DesiredState = $True }
-
     $CurrentSyncFromFlags = $Modes[(Get-Item -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters').GetValue('Type').ToString()]
     If ($CurrentSyncFromFlags -ne $SyncFromFlags) { $Result.Add('SetSyncFromFlags',$True) ; $Result.DesiredState = $False }
     Else { $Result.Add('SetSyncFromFlags',$False) }
 
     If ($CurrentSyncFromFlags -ne 'DOMHIER' -and $CurrentSyncFromFlags -ne 'NO' `
         -and $SyncFromFlags -ne 'DOMHIER' -and $SyncFromFlags -ne 'NO' -and $PSBoundParameters.ContainsKey('Sources')) {
-        
+
         $CurrentSources = @()
-        ((Invoke-Expression -Command "w32tm /query /peers") | Select-String "^Peer:").Line | % { 
-            $Source = ($_ -split ': ')[1].Trim()
-            If (-not ([string]::IsNullOrEmpty($Source))) { $CurrentSources += $Source }
+        $PeerLines = ((Invoke-Expression -Command "w32tm /query /peers") | Select-String "^Peer: ").Line 
+        
+        Foreach ($Line in $PeerLines) { 
+            $Split = ($Line -split ':')
+            If (@($Split).Count -gt 1) { 
+                $Source = $Split[1].Trim() 
+                If (-not ([string]::IsNullOrEmpty($Source))) { $CurrentSources += $Source }
+            }
         }
         $Result.Add('CurrentSources',$CurrentSources)
         If (Compare-Object $Sources $CurrentSources) { $Result.Add('SetSources',$True) ; $Result.DesiredState = $False }
@@ -45,44 +49,49 @@ Function Set-TargetResource {
     
     Param(
 
-        [ValidateSet("MANUAL", "DOMHIER", "ALL", "NO")]
         [Parameter(Mandatory)]
+        [ValidateSet("MANUAL", "DOMHIER", "ALL", "NO")]
         [string]$SyncFromFlags,
-
-        [ValidateNotNullOrEmpy()]
+        
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string[]]$Sources
 
     )
 
     $CurrentState = Get-TargetResource @PSBoundParameters
-
-    If ($CurrentState.SetSyncFromFlags) { Invoke-Expression -Command "w32tm /config /syncfromflags:$SyncFromFlags" }
+    If ($CurrentState.SetSyncFromFlags -eq $True) { Invoke-Expression -Command "w32tm /config /syncfromflags:$SyncFromFlags" }
     If ($SyncFromFlags -ne 'DOMHIER' -and $SyncFromFlags -ne 'NO' -and $PSBoundParameters.ContainsKey('Sources')) {
         If ($CurrentState.ContainsKey('SetSources')) { 
             If ($CurrentState.SetSources -eq $True) { Invoke-Expression -Command ('w32tm /config /manualpeerlist:"' + ($Sources -join " ") + '"')  }
         }
         Else {
             $CurrentSources = @()
-            ((Invoke-Expression -Command "w32tm /query /peers") | Select-String "^Peer:").Line | % { 
-                $Source = ($_ -split ': ')[1].Trim()
-                If (-not ([string]::IsNullOrEmpty($Source))) { $CurrentSources += $Source }
+            $PeerLines = ((Invoke-Expression -Command "w32tm /query /peers") | Select-String "^Peer: ").Line         
+            Foreach ($Line in $PeerLines) { 
+                $Split = ($Line -split ':')
+                If (@($Split).Count -gt 1) { 
+                    $Source = $Split[1].Trim() 
+                    If (-not ([string]::IsNullOrEmpty($Source))) { $CurrentSources += $Source }
+                }
             }
             If (Compare-Object $Sources $CurrentSources) { Invoke-Expression -Command ('w32tm /config /manualpeerlist:"' + ($Sources -join " ") + '"') }
         }
     }
+    Write-Verbose 'Restarting service'
+    Restart-Service w32time
 }
 
 Function Test-TargetResource {
     
     Param(
 
-        [ValidateSet("MANUAL", "DOMHIER", "ALL", "NO")]
         [Parameter(Mandatory)]
+        [ValidateSet("MANUAL", "DOMHIER", "ALL", "NO")]
         [string]$SyncFromFlags,
-
-        [ValidateNotNullOrEmpy()]
+        
         [Parameter(Mandatory=$False)]
+        [ValidateNotNullOrEmpty()]
         [string[]]$Sources
 
     )
