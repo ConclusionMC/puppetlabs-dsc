@@ -1,14 +1,14 @@
 require 'pathname'
 
-Puppet::Type.newtype(:dsc_xdisk) do
+Puppet::Type.newtype(:dsc_xdisk2) do
   require Pathname.new(__FILE__).dirname + '../../' + 'puppet/type/base_dsc'
   require Pathname.new(__FILE__).dirname + '../../puppet_x/puppetlabs/dsc_type_helpers'
 
 
   @doc = %q{
-    The DSC xDisk resource type.
+    The DSC xDisk2 resource type.
     Automatically generated from
-    'xStorage/Modules/xStorage/DSCResources/MSFT_xDisk/MSFT_xDisk.schema.mof'
+    'xStorage/Modules/xStorage/DSCResources/MSFT_xDisk2/MSFT_xDisk2.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.
@@ -24,8 +24,8 @@ Puppet::Type.newtype(:dsc_xdisk) do
       fail('dsc_driveletter is a required attribute') if self[:dsc_driveletter].nil?
     end
 
-  def dscmeta_resource_friendly_name; 'xDisk' end
-  def dscmeta_resource_name; 'MSFT_xDisk' end
+  def dscmeta_resource_friendly_name; 'xDisk2' end
+  def dscmeta_resource_name; 'MSFT_xDisk2' end
   def dscmeta_module_name; 'xStorage' end
   def dscmeta_module_version; '3.2.0.0' end
 
@@ -211,7 +211,7 @@ Puppet::Type.newtype(:dsc_xdisk) do
   end
 end
 
-Puppet::Type.type(:dsc_xdisk).provide :powershell, :parent => Puppet::Type.type(:base_dsc).provider(:powershell) do
+Puppet::Type.type(:dsc_xdisk2).provide :powershell, :parent => Puppet::Type.type(:base_dsc).provider(:powershell) do
   confine :true => (Gem::Version.new(Facter.value(:powershell_version)) >= Gem::Version.new('5.0.10240.16384'))
   defaultfor :operatingsystem => :windows
 

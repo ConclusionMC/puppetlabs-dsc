@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_xwaitforvolume) do
   @doc = %q{
     The DSC xWaitForVolume resource type.
     Automatically generated from
-    'xStorage/DSCResources/MSFT_xWaitForVolume/MSFT_xWaitForVolume.schema.mof'
+    'xStorage/Modules/xStorage/DSCResources/MSFT_xWaitForVolume/MSFT_xWaitForVolume.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.
@@ -27,7 +27,7 @@ Puppet::Type.newtype(:dsc_xwaitforvolume) do
   def dscmeta_resource_friendly_name; 'xWaitForVolume' end
   def dscmeta_resource_name; 'MSFT_xWaitForVolume' end
   def dscmeta_module_name; 'xStorage' end
-  def dscmeta_module_version; '2.8.0.0' end
+  def dscmeta_module_version; '3.2.0.0' end
 
   newparam(:name, :namevar => true ) do
   end
