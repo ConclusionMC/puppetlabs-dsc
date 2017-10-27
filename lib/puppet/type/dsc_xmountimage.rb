@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_xmountimage) do
   @doc = %q{
     The DSC xMountImage resource type.
     Automatically generated from
-    'xStorage/Modules/xStorage/DSCResources/MSFT_xMountImage/MSFT_xMountImage.schema.mof'
+    'xStorage/DSCResources/MSFT_xMountImage/MSFT_xMountImage.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.

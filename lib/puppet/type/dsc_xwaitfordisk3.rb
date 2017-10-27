@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_xwaitfordisk3) do
   @doc = %q{
     The DSC xWaitForDisk3 resource type.
     Automatically generated from
-    'xStorage/Modules/xStorage/DSCResources/MSFT_xWaitForDisk3/MSFT_xWaitForDisk3.schema.mof'
+    'xStorage/DSCResources/MSFT_xWaitForDisk3/MSFT_xWaitForDisk3.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.

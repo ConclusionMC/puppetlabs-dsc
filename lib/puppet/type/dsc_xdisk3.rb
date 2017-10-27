@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_xdisk3) do
   @doc = %q{
     The DSC xDisk3 resource type.
     Automatically generated from
-    'xStorage/Modules/xStorage/DSCResources/MSFT_xDisk3/MSFT_xDisk3.schema.mof'
+    'xStorage/DSCResources/MSFT_xDisk3/MSFT_xDisk3.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.

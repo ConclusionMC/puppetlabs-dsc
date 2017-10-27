@@ -8,7 +8,7 @@ Puppet::Type.newtype(:dsc_xdiskaccesspath) do
   @doc = %q{
     The DSC xDiskAccessPath resource type.
     Automatically generated from
-    'xStorage/Modules/xStorage/DSCResources/MSFT_xDiskAccessPath/MSFT_xDiskAccessPath.schema.mof'
+    'xStorage/DSCResources/MSFT_xDiskAccessPath/MSFT_xDiskAccessPath.schema.mof'
 
     To learn more about PowerShell Desired State Configuration, please
     visit https://technet.microsoft.com/en-us/library/dn249912.aspx.
