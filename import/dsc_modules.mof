@@ -84,6 +84,7 @@
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/xPSDesiredStateConfiguration/DSCResources/MSFT_xWindowsPackageCab/MSFT_xWindowsPackageCab.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/xPSDesiredStateConfiguration/DSCResources/MSFT_xWindowsProcess/MSFT_xWindowsProcess.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/xStorage/Modules/xStorage/DSCResources/MSFT_xDisk/MSFT_xDisk.schema.mof")
+#pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/xStorage/Modules/xStorage/DSCResources/MSFT_xDisk3/MSFT_xDisk3.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/xStorage/Modules/xStorage/DSCResources/MSFT_xDiskAccessPath/MSFT_xDiskAccessPath.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/xStorage/Modules/xStorage/DSCResources/MSFT_xMountImage/MSFT_xMountImage.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/xStorage/Modules/xStorage/DSCResources/MSFT_xWaitForDisk/MSFT_xWaitForDisk.schema.mof")
