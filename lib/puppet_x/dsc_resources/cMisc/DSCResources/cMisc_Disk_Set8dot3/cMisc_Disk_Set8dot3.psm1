@@ -46,9 +46,9 @@ Function Set-TargetResource {
     )
 
     $CurrentState = Get-TargetResource @PSBoundParameters
+    $Disk = $CurrentState.Disk
     If ($CurrentState.CurrentRegistryState -ne "2") { fsutil.exe 8dot3name set 2 }
-    If ($CurrentState.CurrentVolumeState -ne $VolumeState) { fsutil.exe 8dot3name set $($CurrentState.Disk): $VolumeState }
-
+    If ($CurrentState.CurrentVolumeState -ne $VolumeState) { fsutil.exe 8dot3name set ${Disk}: $VolumeState }
 }
 
 Function Test-TargetResource {
