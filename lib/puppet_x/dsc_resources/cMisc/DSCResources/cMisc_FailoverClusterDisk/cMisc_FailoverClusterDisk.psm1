@@ -31,7 +31,11 @@
     Try { $Disk = Get-Disk -Number $Number -ErrorAction Stop }
     Catch { Throw "A disk with number $Number could not be found." }
     $ClusterDisks = Get-WmiObject -Namespace "root\mscluster" -Class MSCluster_Resource -Filter "Type like 'Physical Disk'"
-    $ClusterDisk = $ClusterDisks | ? { $_.PrivateProperties.DiskSignature -eq $Disk.Signature } 
+    If ($Disk.Signature -ne $Null) { $CompareProperty = @{ClusterProperty = "DiskSignature"  ; DiskProperty = "Signature"} }
+    Elseif ($Disk.Guid -ne $Null) { $CompareProperty = @{ClusterProperty = "DiskIdGuid"  ; DiskProperty = "Guid"} }
+    Else { Throw "Disk can not be identified by signature or guid." }
+    $ClusterDisk = $ClusterDisks | ? { ($_.PrivateProperties.($CompareProperty["ClusterProperty"]) -eq $Disk.($CompareProperty["DiskProperty"])) } 
+
     If ($ClusterDisk -ne $Null) { 
         If ($ClusterDisk.OwnerNode -eq $env:COMPUTERNAME) {
             If ($ClusterDisk.Name -ne $Name) { Return @{ DesiredState = $False } }
@@ -39,6 +43,7 @@
         }
         Else { Return @{ DesiredState = $True } }
     } Else { Return @{ DesiredState = $False } }
+    
     Return @{ DesiredState = $True }
 }
 
@@ -73,7 +78,10 @@ Function Set-TargetResource {
     )
 
     $Disk = Get-Disk -Number $Number -ErrorAction Stop
-    $ClusterDisk = Get-WmiObject -Namespace "root\mscluster" -Class MSCluster_Resource -Filter "Type like 'Physical Disk'" | ? { $_.PrivateProperties.DiskSignature -eq $Disk.Signature } 
+    $ClusterDisks = Get-WmiObject -Namespace "root\mscluster" -Class MSCluster_Resource -Filter "Type like 'Physical Disk'"
+    If ($Disk.Signature -ne $Null) { $CompareProperty = @{ClusterProperty = "DiskSignature"  ; DiskProperty = "Signature"} }
+    Elseif ($Disk.Guid -ne $Null) { $CompareProperty = @{ClusterProperty = "DiskIdGuid"  ; DiskProperty = "Guid"} }
+    $ClusterDisk = $ClusterDisks | ? { ($_.PrivateProperties.($CompareProperty["ClusterProperty"]) -eq $Disk.($CompareProperty["DiskProperty"])) } 
 
     If ($ClusterDisk -ne $Null) {
         If ($ClusterDisk.OwnerNode -eq $env:COMPUTERNAME) {
@@ -83,7 +91,7 @@ Function Set-TargetResource {
     } Else {
         Check-Disk -Number $Number -DriveLetter $DriveLetter -PartitionStyle $PartitionStyle -FileSystem $FileSystem -Label $Label
         Get-ClusterAvailableDisk | Where Number -eq $Number | Add-ClusterDisk
-        $ClusterDisk = Get-WmiObject -Namespace "root\mscluster" -Class MSCluster_Resource -Filter "Type like 'Physical Disk'" | ? { $_.PrivateProperties.DiskSignature -eq $Disk.Signature } 
+        $ClusterDisk = Get-WmiObject -Namespace "root\mscluster" -Class MSCluster_Resource -Filter "Type like 'Physical Disk'" | ? { ($_.PrivateProperties.($CompareProperty["ClusterProperty"]) -eq $Disk.($CompareProperty["DiskProperty"])) } 
         If ($ClusterDisk.Name -ne $Name) { $ClusterDisk.Rename($Name) }
     }
 }
