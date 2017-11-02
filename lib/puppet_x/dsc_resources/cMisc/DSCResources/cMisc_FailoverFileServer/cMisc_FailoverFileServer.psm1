@@ -67,7 +67,7 @@ Function Set-TargetResource {
             $_.ObjectType -eq 'bf967a86-0de6-11d0-a285-00aa003049e2'
         }
         If ($CurrentAccess -eq $Null) {
-            $Rule = New-Object System.DirectoryServices.ActiveDirectoryAccessRule( $Computer.SamAccountName, "CreateChild", "Allow", [guid]"bf967a86-0de6-11d0-a285-00aa003049e2" )
+            $Rule = New-Object System.DirectoryServices.ActiveDirectoryAccessRule( $Computer.SID, "CreateChild", "Allow", [guid]"bf967a86-0de6-11d0-a285-00aa003049e2" )
             $Ou.ObjectSecurity.AddAccessRule($Rule)
             $OU.CommitChanges()
         }
