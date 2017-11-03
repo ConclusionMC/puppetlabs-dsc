@@ -61,7 +61,7 @@ Function Set-TargetResource {
         $OU = [ADSI]"LDAP://$($ADOU.DistinguishedName)"
         $Computer = Get-ADComputer $Args[0]
         $CurrentAccess = $OU.ObjectSecurity.GetAccessRules($True,$False,[System.Security.Principal.NTAccount]) | ? { 
-            $_.IdentityReference -match $Args[0] -and `
+            $_.IdentityReference -eq $Args[0] -and `
             $_.ActiveDirectoryRights -eq 'CreateChild' -and `
             $_.AccessControlType -eq 'Allow' -and `
             $_.ObjectType -eq 'bf967a86-0de6-11d0-a285-00aa003049e2'
