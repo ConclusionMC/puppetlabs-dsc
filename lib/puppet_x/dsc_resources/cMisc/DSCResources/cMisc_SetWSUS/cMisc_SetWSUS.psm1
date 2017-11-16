@@ -457,7 +457,7 @@ Function Set-TargetResource {
     )
 
     $CurrentState = Get-TargetResource @PSBoundParameters
-    Foreach ($Path in $Currentstate.ToCreate) {  
+    Foreach ($Path in $Currenstate.ToCreate) {  
         
         $Split = $Path -split '\\'
         Foreach ($SubPath in $Split) {
