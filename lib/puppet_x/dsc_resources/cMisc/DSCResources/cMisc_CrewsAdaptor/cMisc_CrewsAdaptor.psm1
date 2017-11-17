@@ -74,7 +74,8 @@
     If ($Homes -eq $Null) { Throw "No oracle homes found in inventory." }
     $ORAHome = ($Homes | Where NAME -match $OraHomeName).LOC
     If ($ORAHome -eq $Null) { Throw "$OraHomeName not found in oracle inventory." }
-    $MQJar = "$($ClusterDisk.Replace('\',''))\Crews-Adaptor\com.ibm.mq.runtime_7.0.1.3\lib\com.ibm.mqjms.jar"
+    $MQJar = ( $ClusterDisk.Replace('\','') + '\Crews-Adaptor\com.ibm.mq.runtime_7.0.1.3\lib\com.ibm.mqjms.jar' )
+    Write-Verbose $MQJar
     $OracleJar = "$ORAHome\jdbc\lib"
 
     If ($CurrentOwner) {
@@ -268,6 +269,8 @@ Function Set-TargetResource {
             Write-Verbose "Configuring mq jar path"
             $MQJarMatch = $CrewsLocal | Select-String "set MQJAR"
             $CurrMQJar = ($MQJarMatch -split "=")[1]
+            Write-Verbose $CrewsLocal[$MQJarMatch.Linenumber - 1]
+            Write-Verbose "$CurrMQJar $($CurrentState.MQJar)"
             $CrewsLocal[$MQJarMatch.Linenumber - 1] = $CrewsLocal[$MQJarMatch.Linenumber - 1].Replace($CurrMQJar,$CurrentState.MQJar)
         }
         If ($CurrentState.OracleJarCorrect -eq $False) {
@@ -319,6 +322,7 @@ Function Set-TargetResource {
             Expand-Archive -Path "$PSScriptRoot\CrewsAdaptor.zip" -DestinationPath "$PSScriptRoot\Temp"
             Start-Process -FilePath "$PSScriptRoot\Temp\install-crews.cmd" -Wait
             Remove-Item "$PSScriptRoot\Temp" -Recurse -Force
+            $CurrentState.CorrectParameters = $False
         }
         Else { Start-Process -FilePath "$ClusterDisk\Crews-Adaptor\install-crews.cmd" -Wait }
     }
