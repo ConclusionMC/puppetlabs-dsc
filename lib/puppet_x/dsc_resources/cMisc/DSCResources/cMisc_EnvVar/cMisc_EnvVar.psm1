@@ -21,7 +21,7 @@
 
     If ($Ensure -eq "Present") {
         If ($Exists) {
-            If ($Environment.GetValue($Name) -ne $Value) { $DesiredState = $False }
+            If ($Environment.GetValue($Name) -cne $Value) { $DesiredState = $False }
             Else { Write-Verbose "Value is correct" ; $DesiredState = $True }
         }
         Else { $DesiredState = $False }

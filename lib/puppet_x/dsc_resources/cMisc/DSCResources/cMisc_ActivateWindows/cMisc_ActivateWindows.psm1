@@ -6,7 +6,7 @@
         [String]$IpkKey
     )
 
-    $Licensestatus = ((cscript slmgr.vbs /dlv | Select-String 'License Status:') -split ': ')[1]
+    $Licensestatus = ((cmd /c "cscript $env:SystemRoot\system32\slmgr.vbs /dlv" | Select-String 'License Status:').Line -Split "Status:")[1].Trim()
 
     Return @{
         Licensestatus = $Licensestatus
@@ -22,7 +22,7 @@ Function Set-TargetResource {
         [String]$IpkKey
     )
 
-    cscript slmgr.vbs /ipk $IpkKey
+    cmd /c "cscript $env:SystemRoot\system32\slmgr.vbs /ipk $IpkKey"
 }
 
 Function Test-TargetResource {
