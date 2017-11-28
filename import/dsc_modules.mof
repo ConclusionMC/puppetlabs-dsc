@@ -33,6 +33,7 @@
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_EnvVar/cMisc_EnvVar.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_FailoverClusterDisk/cMisc_FailoverClusterDisk.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_FailoverFileServer/cMisc_FailoverFileServer.schema.mof")
+#pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_FailoverFileServer2/cMisc_FailoverFileServer2.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_InstallUnivocalPathServer/cMisc_InstallUnivocalPathServer.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_LocalGroup/cMisc_LocalGroup.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_Passwordreq/cMisc_Passwordreq.schema.mof")
