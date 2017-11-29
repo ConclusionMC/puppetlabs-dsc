@@ -24,6 +24,7 @@
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_ActivateWindows/cMisc_ActivateWindows.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_ClusterResourceDependency/cMisc_ClusterResourceDependency.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_ClusterSubnetDelay/cMisc_ClusterSubnetDelay.schema.mof")
+#pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_ConfigureIPv4/cMisc_ConfigureIPv4.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_ConfigureORA/cMisc_ConfigureORA.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_CrewsAdaptor/cMisc_CrewsAdaptor.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_Disk/cMisc_Disk.schema.mof")
