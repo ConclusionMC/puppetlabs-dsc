@@ -115,18 +115,59 @@ Function Set-TargetResource {
     $Actions = $CurrentState.Actions
     $IPInterface = $CurrentState.IPInterface
 
-    If ($Actions -contains "SetName") { $Adapter | Rename-NetAdapter -NewName $Name }
-    If ($Actions -contains "EnableDHCP") { $IPInterface | Set-NetIPInterface -Dhcp Enabled }
-    If ($Actions -contains "DisableDHCP") { $IPInterface | Set-NetIPInterface -Dhcp Disabled }
-    If ($Actions -contains "RemoveIP") { $IPInterface | Remove-NetIPAddress -IPAddress $CurrentState.CurrentIP -Confirm:$False }
-    If ($Actions -contains "SetIP") { $IPInterface | New-NetIPAddress -IPAddress $IP -Confirm:$False }
-    If ($Actions -contains "SetPrefixLength") { $IPInterface | Set-NetIPAddress -PrefixLength $PrefixLength }
-    If ($Actions -contains "RemoveGateway") { Remove-NetRoute -InterfaceIndex $IPInterface.ifIndex -NextHop $CurrentState.CurrentGateway -Confirm:$False }
-    If ($Actions -contains "SetGateway") { New-NetRoute -InterfaceIndex $IPInterface.ifIndex -NextHop $Gateway -DestinationPrefix '0.0.0.0/0' -Confirm:$False }
-    If ($Actions -contains "RemoveDnsServers") { $IPInterface | Set-DnsClientServerAddress -ResetServerAddresses }
-    If ($Actions -contains "SetDnsServers") { $IPInterface | Set-DnsClientServerAddress -ServerAddresses $DnsServers }
-    If ($Actions -contains "EnableIPv6") { $Adapter | Enable-NetAdapterBinding -ComponentID 'ms_tcpip6' }
-    If ($Actions -contains "DisableIPv6") { $Adapter | Disable-NetAdapterBinding -ComponentID 'ms_tcpip6' }
+    Write-Verbose "List of actions:"
+    $Actions | % { Write-Verbose $_ }
+
+    If ($Actions -contains "SetName") { 
+        Write-Verbose "Changing adapter name"
+        $Adapter = $Adapter | Rename-NetAdapter -NewName $Name -PassThru
+        #$Adapter = Get-NetAdapter | ? { $_.MacAddress.Replace('-','').Replace(':','').Trim() -eq $MacAddress }
+        $IPInterface = $Adapter | Get-NetIPInterface | Where AddressFamily -eq 'IPv4' | Where ConnectionState -eq 'Connected'
+    }
+    If ($Actions -contains "EnableDHCP") {  
+        Write-Verbose "Enabling DHCP"
+        $IPInterface | Set-NetIPInterface -Dhcp Enabled 
+    }
+    If ($Actions -contains "DisableDHCP") {  
+        Write-Verbose "Disabling DHCP"
+        $IPInterface | Set-NetIPInterface -Dhcp Disabled 
+    }
+    If ($Actions -contains "RemoveIP") {  
+        Write-Verbose "Removing current IP"
+        $IPInterface | Remove-NetIPAddress -IPAddress $CurrentState.CurrentIP -Confirm:$False 
+    }
+    If ($Actions -contains "SetIP") {  
+        Write-Verbose "Setting new IP"
+        $IPInterface | New-NetIPAddress -IPAddress $IP -Confirm:$False 
+    }
+    If ($Actions -contains "SetPrefixLength") {  
+        Write-Verbose "Setting subnet mask"
+        $IPInterface | Set-NetIPAddress -PrefixLength $PrefixLength 
+    }
+    If ($Actions -contains "RemoveGateway") {  
+        Write-Verbose "Removing old gateway route"
+        Remove-NetRoute -InterfaceIndex $IPInterface.ifIndex -NextHop $CurrentState.CurrentGateway -Confirm:$False 
+    }
+    If ($Actions -contains "SetGateway") {  
+        Write-Verbose "Setting new gateway route"
+        New-NetRoute -InterfaceIndex $IPInterface.ifIndex -NextHop $Gateway -DestinationPrefix '0.0.0.0/0' -Confirm:$False 
+    }
+    If ($Actions -contains "RemoveDnsServers") {  
+        Write-Verbose "Resetting DNS servers"
+        $IPInterface | Set-DnsClientServerAddress -ResetServerAddresses 
+    }
+    If ($Actions -contains "SetDnsServers") { 
+        Write-Verbose "Setting new DNS servers"
+        $IPInterface | Set-DnsClientServerAddress -ServerAddresses $DnsServers 
+    }
+    If ($Actions -contains "EnableIPv6") {
+        Write-Verbose "Enabling IPv6"
+        $Adapter | Enable-NetAdapterBinding -ComponentID 'ms_tcpip6' 
+    }
+    If ($Actions -contains "DisableIPv6") {  
+        Write-Verbose "Disabling IPv6"
+        $Adapter | Disable-NetAdapterBinding -ComponentID 'ms_tcpip6' 
+    }
 
 }
 
