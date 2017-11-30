@@ -15,7 +15,7 @@
 
         [Parameter(Mandatory=$False)]
         [ValidateRange(0,24)]
-        [int]$PrefixLength,
+        [int]$PrefixLength = 20,
 
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
@@ -23,7 +23,7 @@
 
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
-        [string[]]$DnsServers = @(),
+        [string[]]$DnsServers,
 
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
@@ -49,27 +49,36 @@
         DesiredState = $True
     }
 
-    If ($PSBoundParameters.ContainsKey('Name') -and $Adapter.Name -ne $Name) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += 'SetName' } }
+    If ($PSBoundParameters.ContainsKey('Name') -and $Adapter.Name -cne $Name) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += 'SetName' } }
     
-    If ($IPInterface.Dhcp -eq 'Enabled' -and $PSBoundParameters.ContainsKey('IP')) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += @('SetIP','SetPrefixLength','SetGateway','DisableDHCP') } }
+    If ($IPInterface.Dhcp -eq 'Enabled' -and $PSBoundParameters.ContainsKey('IP')) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += @('SetIP','SetPrefixLength','DisableDHCP') } }
     Elseif ($IPInterface.Dhcp -eq 'Disabled' -and -not $PSBoundParameters.ContainsKey('IP')) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += @('EnableDHCP','RemoveGateway') } }
     Elseif ($PSBoundParameters.ContainsKey('IP')) {
-        If (-not $PSBoundParameters.ContainsKey('PrefixLength') -or -not $PSBoundParameters.ContainsKey('Gateway')) { Throw "When using the IP parameter the PrefixLength and Gateway parameters must also be provided." }
         If ($CurrentIPAddress.Count -gt 1 -and $IP -notin $CurrentIPAddress.IPAddress) { Throw "Multiple IP addresses found but desired IP address is not among them. This script can not decide which IP address to change."  }
         Elseif ($CurrentIPAddress.Count -gt 1) { $CurrentIPAddress = $CurrentIPAddress | Where IpAddress -eq $IP }
         Else {
             If ($IP -ne $CurrentIPAddress.IPAddress) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += @('RemoveIP','SetIP') } } 
-            If ($PrefixLength -ne $CurrentIPAddress.PrefixLength) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += 'SetPrefixLength' } }   
-            If ($Gateway -ne $CurrentIPConf.IPv4DefaultGateway.NextHop) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += @('RemoveGateway','SetGateway') } }  
+            If ($PrefixLength -ne $CurrentIPAddress.PrefixLength) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += 'SetPrefixLength' } }  
         }
     }
 
-    If ($DnsServers.Count -eq 0 -and $CurrentIPConf.DNSServer.ServerAddresses -ne $Null) { $Result.Actions += 'RemoveDnsServers' }
-    Elseif ($DnsServers.Count -ne 0 -and $CurrentIPConf.DNSServer.ServerAddresses -eq $Null) { $Result.Actions += 'SetDnsServers' }
-    Else {
-        $Comparison = @(Compare-Object -ReferenceObject $CurrentIPConf.DNSServer.ServerAddresses -DifferenceObject $DnsServers)
-        If ($Comparison.Count -gt 0) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += @('RemoveDnsServers','SetDnsServers') } }
+    If ($PSBoundParameters.ContainsKey('Gateway')) {
+        If (-not $PSBoundParameters.ContainsKey('IP')) { Throw "Gateway is set to be configured but no IP address is provided. To configure a gateway, an IP address must also be set." }
+        Elseif ($IPInterface.Dhcp -eq 'Enabled') { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += @('SetGateway') } }
+        Elseif ($CurrentIPConf.IPv4DefaultGateway.NextHop -eq $Null) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += @('SetGateway') } }
+        Elseif ($Gateway -ne $CurrentIPConf.IPv4DefaultGateway.NextHop) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += @('RemoveGateway','SetGateway') } }
     }
+    Elseif ($CurrentIPConf.IPv4DefaultGateway.NextHop -ne $Null -and $IPInterface.Dhcp -eq 'Disabled') { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += @('RemoveGateway') } }
+
+    If ($PSBoundParameters.ContainsKey('DnsServers')) {
+        If ($CurrentIPConf.DNSServer.ServerAddresses -eq $Null) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += 'SetDnsServers' } }
+        Elseif ($IPInterface.Dhcp -eq 'Enabled') { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += 'SetDnsServers' } }
+        Else {
+            $Comparison = @(Compare-Object -ReferenceObject $CurrentIPConf.DNSServer.ServerAddresses -DifferenceObject $DnsServers)
+            If ($Comparison.Count -gt 0) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += 'SetDnsServers' } }
+        }
+    }
+    Elseif ($CurrentIPConf.DNSServer.ServerAddresses -ne $Null -and $IPInterface.Dhcp -eq 'Disabled') { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += 'RemoveDnsServers' } }
 
     If ($IPv6Enabled -eq $True -and $DisableIPv6 -eq $True) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += 'DisableIPv6' } }
     If ($IPv6Enabled -eq $False -and $DisableIPv6 -eq $False) { If ($TestResource) { Return @{ DesiredState = $False } } Else { $Result.Actions += 'EnableIPv6'} }
@@ -95,7 +104,7 @@ Function Set-TargetResource {
 
         [Parameter(Mandatory=$False)]
         [ValidateRange(0,24)]
-        [int]$PrefixLength,
+        [int]$PrefixLength = 20,
 
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
@@ -103,12 +112,12 @@ Function Set-TargetResource {
 
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
-        [string[]]$DnsServers = @(),
+        [string[]]$DnsServers,
 
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
         [boolean]$DisableIPv6 = $True     
-    ) 
+    )
         
     $CurrentState = Get-TargetResource @PSBoundParameters
     $Adapter = $CurrentState.Adapter
@@ -152,8 +161,8 @@ Function Set-TargetResource {
         Write-Verbose "Setting new gateway route"
         New-NetRoute -InterfaceIndex $IPInterface.ifIndex -NextHop $Gateway -DestinationPrefix '0.0.0.0/0' -Confirm:$False 
     }
-    If ($Actions -contains "RemoveDnsServers") {  
-        Write-Verbose "Resetting DNS servers"
+    If ($Actions -contains "RemoveDnsServers") { 
+        Write-Verbose "Removing DNS servers"
         $IPInterface | Set-DnsClientServerAddress -ResetServerAddresses 
     }
     If ($Actions -contains "SetDnsServers") { 
@@ -188,7 +197,7 @@ Function Test-TargetResource {
 
         [Parameter(Mandatory=$False)]
         [ValidateRange(0,24)]
-        [int]$PrefixLength,
+        [int]$PrefixLength = 20,
 
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
@@ -196,7 +205,7 @@ Function Test-TargetResource {
 
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
-        [string[]]$DnsServers = @(),
+        [string[]]$DnsServers,
 
         [Parameter(Mandatory=$False)]
         [ValidateNotNullOrEmpty()]
