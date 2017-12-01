@@ -41,7 +41,8 @@ Function Set-TargetResource {
 
     $Resource = Get-ClusterResource -Name $ResourceName
     $ResourceDependency = Get-ClusterResource -Name $Dependency
-    $Resource | Add-ClusterResourceDependency -Resource $ResourceDependency
+    Try { $Resource | Add-ClusterResourceDependency -Resource $ResourceDependency -ErrorAction Stop }
+    Catch { If (-not $_.ErrorDetails.Message.Contains("it is already dependent")) { Throw $_.ErrorDetails.Message } }
 
 }
 
