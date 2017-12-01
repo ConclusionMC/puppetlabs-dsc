@@ -86,11 +86,12 @@ Function Set-TargetResource {
     If ($ClusterDisk -ne $Null) {
         If ($ClusterDisk.OwnerNode -eq $env:COMPUTERNAME) {
             If ($ClusterDisk.Name -ne $Name) { $ClusterDisk.Rename($Name) }
-            Check-Disk -Number $Number -DriveLetter $DriveLetter -PartitionStyle $PartitionStyle -FileSystem $FileSystem -Label $Label
+            Check-Disk -Number $Number -DriveLetter $DriveLetter -PartitionStyle $PartitionStyle -FileSystem $FileSystem -Label $Label -Clustered
         }
     } Else {
         Check-Disk -Number $Number -DriveLetter $DriveLetter -PartitionStyle $PartitionStyle -FileSystem $FileSystem -Label $Label
         Get-ClusterAvailableDisk | Where Number -eq $Number | Add-ClusterDisk
+        Start-Sleep 2
         $ClusterDisk = Get-WmiObject -Namespace "root\mscluster" -Class MSCluster_Resource -Filter "Type like 'Physical Disk'" | ? { ($_.PrivateProperties.($CompareProperty["ClusterProperty"]) -eq $Disk.($CompareProperty["DiskProperty"])) } 
         If ($ClusterDisk.Name -ne $Name) { $ClusterDisk.Rename($Name) }
     }
@@ -154,11 +155,17 @@ Function Check-Disk {
         [String]$Label,
 
         [Parameter(Mandatory=$False)]
-        [Switch]$ReturnBoolean = $False
+        [Switch]$ReturnBoolean = $False,
+        
+        [Parameter(Mandatory=$False)]
+        [Switch]$Clustered = $False
     )    
 
     $Disk = Get-Disk -Number $Number
-    If ($Disk.OperationalStatus -eq "Offline") { If ($ReturnBoolean) { Return $False } Else { $Disk | Set-Disk -IsOffline:$False } }
+    If ($Disk.OperationalStatus -eq "Offline") { 
+        If ($ReturnBoolean) { Return $False } 
+        Elseif ($Clustered) { Get-ClusterResource -Name $Label | Start-ClusterResource }
+        Else { $Disk | Set-Disk -IsOffline:$False } }
     If (-not $ReturnBoolean) { $Disk | Initialize-Disk -ErrorAction SilentlyContinue }
 
     $Partition = $Disk | Get-Partition | Where Type -ne 'Reserved'
