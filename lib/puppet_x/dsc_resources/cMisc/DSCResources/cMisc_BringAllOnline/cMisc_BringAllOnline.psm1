@@ -33,8 +33,7 @@ Function Set-TargetResource {
     )
 
     $ClusterGroup = Get-ClusterGroup -Name $GroupName
-    $ClusterGroup | Get-ClusterResource | % { $_ | Start-ClusterResource }
-
+    $ClusterGroup | Get-ClusterResource | % { $_ | Start-ClusterResource -ErrorAction SilentlyContinue }
     
 }
 

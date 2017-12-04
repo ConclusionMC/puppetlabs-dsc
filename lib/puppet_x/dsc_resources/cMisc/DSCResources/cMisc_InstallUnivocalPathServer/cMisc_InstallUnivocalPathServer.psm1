@@ -115,7 +115,7 @@ Function Set-TargetResource {
             $Online = (Get-ClusterResource -Name $Service.Name -ErrorAction SilentlyContinue -Verbose:$False).State -eq 'Online'
 
             If ($Online -ne $True) {
-                Get-ClusterResource -Name $Service.Name -ErrorAction SilentlyContinue -Verbose:$False | Start-ClusterResource -Verbose:$False
+                Get-ClusterResource -Name $Service.Name -ErrorAction SilentlyContinue -Verbose:$False | Start-ClusterResource -Verbose:$False -ErrorAction SilentlyContinue
             } 
         }
     }
