@@ -174,18 +174,18 @@
     If ((Test-Path $TnsNames) -eq $False) { $CreateTnsNames = $True ; $SetTnsNames = $True }
     Else { $CreateTnsNames = $False }
 
-    $TnsName  = @()
-    $TnsName += "$TnsName ="
-    $TnsName += "  (DESCRIPTION ="
-    $TnsName += "    (ADDRESS_LIST ="
-    $TnsName += "      (ADDRESS = (PROTOCOL = TCP)(HOST = $DBHOST)(PORT = $DBPort))"
-    $TnsName += "    )"
-    $TnsName += "    (CONNECT_DATA = (SERVICE_NAME = $ServiceName))"
-    $TnsName += "  )"
+    $RequiredTnsName  = @()
+    $RequiredTnsName += "$TnsName ="
+    $RequiredTnsName += "  (DESCRIPTION ="
+    $RequiredTnsName += "    (ADDRESS_LIST ="
+    $RequiredTnsName += "      (ADDRESS = (PROTOCOL = TCP)(HOST = $DBHOST)(PORT = $DBPort))"
+    $RequiredTnsName += "    )"
+    $RequiredTnsName += "    (CONNECT_DATA = (SERVICE_NAME = $ServiceName))"
+    $RequiredTnsName += "  )"
 
     If ($CreateTnsNames -eq $False) {
         $Content = @(Get-Content -Path $TnsNames)
-        $Comparison = Compare-Object -ReferenceObject $Content -DifferenceObject $TnsName
+        $Comparison = Compare-Object -ReferenceObject $Content -DifferenceObject $RequiredTnsName
         If ($Comparison.Count -gt 0) { $SetTnsNames = $True }
         Else { $SetTnsNames = $False }
     }
@@ -200,7 +200,7 @@
         SetProperties = $SetProperties
         CreateTnsNames = $CreateTnsNames
         SetTnsNames = $SetTnsNames
-        TnsName = $TnsName
+        TnsName = $RequiredTnsName
         TnsPath = $TnsNames
     }
 }
