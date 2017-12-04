@@ -333,7 +333,7 @@ Function Test-TargetResource {
 
     )
 
-    Get-TargetResource @PSBoundParameters
+    Return (Get-TargetResource @PSBoundParameters).DesiredState
 }
 
 Function Configure-PropertiesFile {
