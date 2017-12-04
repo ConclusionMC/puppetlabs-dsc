@@ -91,6 +91,7 @@ Function Set-TargetResource {
         If ($PSBoundParameters.ContainsKey('IgnoreNetwork')) { $Arguments.Add('IgnoreNetwork',$IgnoreNetwork) }
         Add-ClusterFileServerRole @Arguments
         Start-Sleep 8
+        Get-ClusterNode -Name $env:COMPUTERNAME | Suspend-ClusterNode
         $ClusterGroup = Get-ClusterGroup -Name $ShareName
 
     }
