@@ -64,120 +64,105 @@
         [string]$JMSPassword
 
     )
-
-    $CurrentOwner = (Get-ClusterGroup -Name $GroupName).OwnerNode.Name-eq $env:COMPUTERNAME
-
-    $ORACLE = "HKLM:\SOFTWARE\ORACLE"
-    $Inventory = Get-Item -Path $ORACLE | Get-ItemPropertyValue -Name "inst_loc"
-    [xml]$InventoryXML = Get-Content -Path "$Inventory\ContentsXML\inventory.xml"
-    $Homes = $InventoryXML.INVENTORY.HOME_LIST.HOME
-    If ($Homes -eq $Null) { Throw "No oracle homes found in inventory." }
-    $ORAHome = ($Homes | Where NAME -match $OraHomeName).LOC
-    If ($ORAHome -eq $Null) { Throw "$OraHomeName not found in oracle inventory." }
-    $MQJar = ( $ClusterDisk.Replace('\','') + '\Crews-Adaptor\com.ibm.mq.runtime_7.0.1.3\lib\com.ibm.mqjms.jar' )
-    Write-Verbose $MQJar
-    $OracleJar = "$ORAHome\jdbc\lib"
-
-    If ($CurrentOwner) {
-
-        If (-not (Test-Path "$ClusterDisk\Crews-Adaptor")) { $Expanded = $False }
-        Else { $Expanded = $True }
-
-        If (-not (Test-Path "$ClusterDisk\Crews-Adaptor\crews-local.cmd")) { $JavaCorrect = $False ; $MQJarCorrect = $False ; $OracleJarCorrect = $False }
-        Else {
-            $CurrJavaPath = ((Get-Content -Path "$ClusterDisk\Crews-Adaptor\crews-local.cmd" | Select-String "set JAVA_HOME") -split "=")[1]
-            $JavaCorrect = $CurrJavaPath -eq $JavaPath
-            $CurrMQJar = ((Get-Content -Path "$ClusterDisk\Crews-Adaptor\crews-local.cmd" | Select-String "set MQJAR") -split "=")[1]
-            $MQJarCorrect = $CurrMQJar -eq $MQJar
-            $CurrOracleJar = ((Get-Content -Path "$ClusterDisk\Crews-Adaptor\crews-local.cmd" | Select-String "set ORACLEJAR") -split "=")[1]
-            $OracleJarCorrect = $CurrOracleJar -eq $OracleJar
-        }
-
-        If (-not (Test-Path "$ClusterDisk\Crews-Adaptor\config\crews-adaptor.properties")) { $ConfigCorrect = $False }
-        Else { $ConfigCorrect = Configure-PropertiesFile @PSBoundParameters -ReturnBoolean }
-
-        If (-not (Test-Path "$ClusterDisk\Crews-Adaptor\config\datasets.xml")) { $DataSetsCorrect = $False }
-        Else {
-            $DataSetsCorrect = $True
-            $DataSetsXML = [xml](Get-Content -Path "$ClusterDisk\Crews-Adaptor\config\datasets.xml")
-            $RequiredDatasets = $DataSets | % { ((($_ -split ";") | ? { $_ -match "user=" }) -split "=")[1] }
-            $CurrentDatasets = $DataSetsXML.datasets.dataset.user
-            $ToRemove = (Compare-Object -ReferenceObject $RequiredDatasets -DifferenceObject $CurrentDatasets | Where SideIndicator -eq "=>").InputObject        
-            Foreach ($Dataset in $DataSets){
-                $DataSet -split ';' | % -Begin { $Properties = @{} } -Process { $Split = $_ -split "=" ; $Properties.Add($Split[0],$Split[1]) }
-                $CurrDataSet = $DataSetsXML.datasets.dataset | Where user -eq $Properties.user
-                If ($CurrDataSet -eq $Null) { $DataSetsCorrect = $False }
-                Else {
-                    Foreach ($Property in $Properties.GetEnumerator()) {
-                        $CurrentValue = $CurrDataSet.($Property.Key)
-                        If ([string]::IsNullOrEmpty($CurrentValue)) { $DataSetsCorrect = $False }
-                        Elseif ($CurrentValue -ne $Property.Value) { $DataSetsCorrect = $False }            
-                    }
-                }
-            }
-            If ($ToRemove -ne $Null) { $DataSetsCorrect = $False }
-        }
-
-    } Else { $Expanded = $True ; $JavaCorrect = $True ; $MQJarCorrect = $True ; $OracleJarCorrect = $True ; $ConfigCorrect = $True ; $DataSetsCorrect = $True }
     
-    $Installed = (Get-Service -Name "CrewsAdaptor" -ErrorAction SilentlyContinue) -ne $Null
+    $TestResource = (Get-PSCallStack).Command[1] -eq 'Test-TargetResource'
 
-    $Parameters = @(
-        @{ Name = 'Current Directory' ; Value = "$($ClusterDisk.Replace('\',''))\Crews-Adaptor" }
-        @{ Name = 'JVM Library' ; Value = "$JavaPath\bin\server\jvm.dll" }
-        @{ Name = 'JVM Option Number 0' ; Value = "-Djava.class.path=$($ClusterDisk.Replace('\',''))\Crews-Adaptor\config;$MQJar;$OracleJar;$($ClusterDisk.Replace('\',''))\Crews-Adaptor\lib\crews-adaptor-main.jar" }
-        @{ Name = 'System.err File' ; Value = "$($ClusterDisk.Replace('\',''))\Crews-Adaptor\log\stderr.log" }
-        @{ Name = 'System.out File' ; Value = "$($ClusterDisk.Replace('\',''))\Crews-Adaptor\log\stdout.log" }
-    ) 
+    $ClusterDisk = "$($ClusterDisk.Replace('\','').Replace(':','').Trim()):"
+    $CurrentOwner = (Get-ClusterGroup -Name $GroupName).OwnerNode.Name -eq $env:COMPUTERNAME
+    $ClusterOnline = (Get-ClusterResource -Name $GroupName -ErrorAction SilentlyContinue) -ne $Null
+    $ClusterDiskAvailable = Test-Path "${ClusterDisk}"
+    $ServiceInstalled = (Get-Service -Name "CrewsAdaptor" -ErrorAction SilentlyContinue) -ne $Null
+    $Inventory = [xml](Get-Content -Path "$((Get-Item -Path "HKLM:\SOFTWARE\ORACLE" | Get-ItemPropertyValue -Name "inst_loc"))\ContentsXML\inventory.xml")
+    $OraHomeAvailable = ($Inventory.INVENTORY.HOME_LIST.HOME | Where NAME -eq $OraHomeName) -ne $Null
+    If ($OraHomeAvailable) { $OraHome = ($Inventory.INVENTORY.HOME_LIST.HOME | Where NAME -eq $OraHomeName).LOC }
+    Else { Throw "$OraHomeName could not be found" }
 
-    If ($Installed) {
-        $RegCrewsAdaptor = Get-Item "HKLM:\SYSTEM\CurrentControlSet\Services\CrewsAdaptor"
-        $RegParameters = Get-Item "HKLM:\SYSTEM\CurrentControlSet\Services\CrewsAdaptor\Parameters"
-        $CurrParameters = $RegParameters.GetValueNames()
-        $CorrectImagePath = $RegCrewsAdaptor.GetValue('ImagePath') -eq "$($ClusterDisk.Replace('\',''))\Crews-Adaptor\crews-service.exe" 
-        $CorrectParameters = $True
-        Foreach ($Parameter in $Parameters) {
-            If ($Parameter.Name -notin $CurrParameters) { $CorrectParameters = $False }
-            Elseif ($RegParameters.GetValue($Parameter.Name) -ne $Parameter.Value) { $CorrectParameters = $False }
+    $Result = @{
+        DesiredState = $True
+        ClusterDisk = $ClusterDisk
+        OraHome = $OraHome
+        Actions = @()
+    }
+
+    #Expanded
+    If ($ClusterDiskAvailable) { 
+        $Expanded = Test-Path "${ClusterDisk}\crews-adaptor\crews-service.exe"
+        If (-not $Expanded) { If ($TestResource) { Return @{ DesiredState  = $False } } Else { $Result.Actions += "ExpandArchive" } }
+    }
+    
+    #Installed
+    If (-not $ServiceInstalled) { 
+        If ($TestResource) { Return @{ DesiredState  = $False } } 
+        Elseif ($ClusterDiskAvailable) { $Result.Actions += "InstallService" }
+        Else { $Result.Actions += @("InstallServiceTemp","ConfigureRegistry") }
+    }
+
+    #Registered
+    $Registered = Configure-Registry -ClusterDisk $ClusterDisk -JavaPath $JavaPath -OraHome $OraHome -ReturnBoolean
+    If (-not $Registered) {
+        If ($TestResource) { Return @{ DesiredState  = $False } } 
+        Else { $Result.Actions += "ConfigureRegistry" }
+    }
+
+    #crews-adaptor.properties
+    If ($ClusterDiskAvailable) {
+        If ($Expanded -eq $True) {
+            $Configured = Configure-PropertiesFile @PSBoundParameters -ReturnBoolean
+            If (-not $Configured) {
+                If ($TestResource) { Return @{ DesiredState  = $False } } 
+                Else { $Result.Actions += "ConfigureProperties" }
+            }
+        } Else { $Result.Actions += "ConfigureProperties" }
+    }
+
+    #datasets.xml
+    If ($ClusterDiskAvailable) {
+        If ($Expanded -eq $True) {
+            $CorrectDatasets = Configure-DataSets -ClusterDisk $ClusterDisk -DataSets $DataSets -ReturnBoolean
+            If (-not $CorrectDatasets) {
+                If ($TestResource) { Return @{ DesiredState = $False } }
+                Else { $Result.Actions += "ConfigureDatasets" }
+            }
+        }
+        Else { $Result.Actions += "ConfigureDatasets" }
+    }
+
+    #Clustered
+    If ($CurrentOwner -and $ClusterOnline -and $ClusterDiskAvailable) {
+        $Clustered = (Get-ClusterResource -Name "CrewsAdaptor" -ErrorAction SilentlyContinue) -ne $Null
+        If (-not $Clustered) {
+            If ($TestResource) { Return @{ DesiredState = $False } }
+            Else { $Result.Actions += "ClusterService" }
         }
     }
-    Elseif (!$CurrentOwner) { $CorrectImagePath = $False ; $CorrectParameters = $False }
-    Else { $CorrectImagePath = $True ; $CorrectParameters = $True }
 
-    If ($CurrentOwner) { 
-        $Clustered = (Get-ClusterResource -Name "CrewsAdaptor" -ErrorAction SilentlyContinue) -ne $Null 
-        $CorrectParam = (Get-ClusterResource -Name "CrewsAdaptor" -ErrorAction SilentlyContinue | Get-ClusterParameter | Where Name -eq "ServiceName").Value -eq "CrewsAdaptor"
-        $Online = (Get-ClusterResource -Name "CrewsAdaptor" -ErrorAction SilentlyContinue -Verbose:$False).State -eq 'Online'
+    #Parameter set
+    If ($CurrentOwner -and $ClusterOnline) {
+        $ParameterSet = (Get-ClusterResource -Name "CrewsAdaptor" -ErrorAction SilentlyContinue | Get-ClusterParameter | Where Name -eq "ServiceName").Value -eq "CrewsAdaptor"
+        If (-not $ParameterSet) {
+            If ($TestResource) { Return @{ DesiredState = $False } }
+            Else { $Result.Actions += "SetClusterParameter" }
+        }
     }
-    Else { $Clustered = $True ; $CorrectParam = $True ; $Online = $True }
 
-    If ( ($Installed -eq $True -and $Expanded -eq $True -and $Clustered -eq $True -and $CurrentOwner) -and ($ConfigCorrect -eq $False -or $DataSetsCorrect -eq $False -or $CorrectParameters -eq $False -or $CorrectParam -eq $False -or $CorrectImagePath -eq $False) ) {
-         $RequireRestart = $True
-    } Else { $RequireRestart = $False }
-
-    If ($Expanded -eq $False -or $JavaCorrect -eq $False -or $MQJarCorrect -eq $False -or $OracleJarCorrect -eq $False -or $ConfigCorrect -eq $False -or $DataSetsCorrect -eq $False -or $Installed -eq $False -or $CorrectParameters -eq $False -or $CorrectImagePath -eq $False -or $Clustered -eq $False -or $CorrectParam -eq $False -or $Online -eq $False) {
-        $DesiredState = $False
-    } Else { $DesiredState = $True }
-
-    Return @{
-        Expanded = $Expanded
-        JavaCorrect = $JavaCorrect
-        MQJarCorrect = $MQJarCorrect
-        OracleJarCorrect = $OracleJarCorrect
-        ConfigCorrect = $ConfigCorrect
-        DataSetsCorrect = $DataSetsCorrect
-        Installed = $Installed
-        CorrectImagePath = $CorrectImagePath
-        Clustered = $Clustered
-        CorrectParam = $CorrectParam
-        CorrectParameters = $CorrectParameters
-        Parameters = $Parameters
-        Online = $Online
-        RequireRestart = $RequireRestart
-        MQJar = $MQJar
-        OracleJar = $OracleJar
-        DesiredState = $DesiredState
+    #Online
+    If ($CurrentOwner -and $ClusterOnline) {
+        $Online = (Get-ClusterResource -Name "CrewsAdaptor" -ErrorAction SilentlyContinue).State -eq 'Online'
+        If (-not $Online) {
+            If ($TestResource) { Return @{ DesiredState = $False } }
+            Else { $Result.Actions += "BringOnline" }
+        }
     }
+
+    #Restart service
+    If (($Result.Actions -contains 'ConfigureProperties' -or $Result.Actions -contains 'ConfigureRegistry' -or $Result.Actions -contains 'ConfigureDataSets' -or $Result.Actions -contains 'SetClusterParameter') -and $Online -eq $True) {
+        $Result.Actions += @("TakeOffline","BringOnline")
+    }
+         
+
+    If ($Result.Actions.Count -gt 0) { $Result.DesiredState = $False ; $Result.Actions = $Result.Actions | Get-Unique }
+
+    Return $Result
 }
 
 Function Set-TargetResource {
@@ -247,9 +232,15 @@ Function Set-TargetResource {
 
     )
 
-    $CurrentState = Get-TargetResource @PSBoundParameters
+    $State = Get-TargetResource @PSBoundParameters
+    $Actions = $State.Actions
+    $ClusterDisk = $State.ClusterDisk
+    $OraHome = $State.OraHome
 
-    If ($CurrentState.Expanded -eq $False) {
+    Write-Host "List of actions:"
+    $Actions | % { Write-Host $_ }
+
+    If ($Actions -contains "ExpandArchive") {
         Write-Verbose "Expanding archive"
         Expand-Archive -Path "$PSScriptRoot\CrewsAdaptor.zip" -DestinationPath "$ClusterDisk\Crews-Adaptor" 
         New-Item -Path "$ClusterDisk\Crews-Adaptor\log" -ItemType Directory -Force -ErrorAction SilentlyContinue
@@ -257,93 +248,22 @@ Function Set-TargetResource {
         New-Item -Path "$ClusterDisk\Crews-Adaptor\log\archive" -ItemType Directory -Force -ErrorAction SilentlyContinue
         New-Item -Path "$ClusterDisk\Crews-Adaptor\log\_scom" -ItemType Directory -Force -ErrorAction SilentlyContinue
     }
-    If ($CurrentState.JavaCorrect -eq $False -or $CurrentState.MQJarCorrect -eq $False -or $CurrentState.OracleJarCorrect -eq $False) {
-        $CrewsLocal = Get-Content -Path "$ClusterDisk\Crews-Adaptor\crews-local.cmd"
-        If ($CurrentState.JavaCorrect -eq $False) {
-            Write-Verbose "Configuring java path"
-            $JavaMatch = $CrewsLocal | Select-String "set JAVA_HOME"
-            $CurrJavaPath = ($JavaMatch -split "=")[1]
-            $CrewsLocal[$JavaMatch.Linenumber - 1] = $CrewsLocal[$JavaMatch.Linenumber - 1].Replace($CurrJavaPath,$JavaPath)
-        }
-        If ($CurrentState.MQJarCorrect -eq $False) {
-            Write-Verbose "Configuring mq jar path"
-            $MQJarMatch = $CrewsLocal | Select-String "set MQJAR"
-            $CurrMQJar = ($MQJarMatch -split "=")[1]
-            Write-Verbose $CrewsLocal[$MQJarMatch.Linenumber - 1]
-            Write-Verbose "$CurrMQJar $($CurrentState.MQJar)"
-            $CrewsLocal[$MQJarMatch.Linenumber - 1] = $CrewsLocal[$MQJarMatch.Linenumber - 1].Replace($CurrMQJar,$CurrentState.MQJar)
-        }
-        If ($CurrentState.OracleJarCorrect -eq $False) {
-            Write-Verbose "Configuring oracle jar path"
-            $OracleJarMatch = $CrewsLocal | Select-String "set ORACLEJAR"
-            $CurrOracleJar = ($OracleJarMatch -split "=")[1]
-            $CrewsLocal[$OracleJarMatch.Linenumber - 1] = $CrewsLocal[$OracleJarMatch.Linenumber - 1].Replace($CurrOracleJar,$CurrentState.OracleJar)
-        }
-        Set-Content -Path "$ClusterDisk\Crews-Adaptor\crews-local.cmd" -Value $CrewsLocal
+    If ($Actions -contains "InstallServiceTemp") {
+        Write-Verbose "Expanding archive to temporary dir"
+        New-Item -Path "$PSScriptRoot\Temp" -ItemType Directory
+        Expand-Archive -Path "$PSScriptRoot\CrewsAdaptor.zip" -DestinationPath "$PSScriptRoot\Temp"
+        Start-Process -FilePath "$PSScriptRoot\Temp\install-crews.cmd" -Wait
+        Remove-Item -Path "$PSScriptRoot\Temp" -Recurse -Force
     }
-    If ($CurrentState.ConfigCorrect -eq $False) { Write-Verbose "Configuring properties file" ; Configure-PropertiesFile @PSBoundParameters }
-    If ($CurrentState.DataSetsCorrect -eq $False) {
-        Write-Verbose "Configuring datasets file"
-        $DataSetsXML = [xml](Get-Content -Path "$ClusterDisk\Crews-Adaptor\config\datasets.xml")
-        $RequiredDatasets = $DataSets | % { ((($_ -split ";") | ? { $_ -match "user=" }) -split "=")[1] }
-        $CurrentDatasets = $DataSetsXML.datasets.dataset.user
-        $ToRemove = (Compare-Object -ReferenceObject $RequiredDatasets -DifferenceObject $CurrentDatasets | Where SideIndicator -eq "=>").InputObject
-        Foreach ($Dataset in $DataSets){
-            $DataSet -split ';' | % -Begin { $Properties = @{} } -Process { $Split = $_ -split "=" ; $Properties.Add($Split[0],$Split[1]) }
-            $CurrDataSet = $DataSetsXML.datasets.dataset | Where user -eq $Properties.user
-            If ($CurrDataSet -eq $Null) {
-                [xml]$Child = "<dataset $(($Properties.GetEnumerator() | % { ("$($_.Key)=" + '"' + "$($_.Value)" + '"') }) -join " ") $('vertraging="true" dienstregeling="true" materieelplan="false"/>')"
-                $DataSetsXML.datasets.AppendChild($DataSetsXML.ImportNode($Child.dataset,$True))
-            }
-            Else {
-                Foreach ($Property in $Properties.GetEnumerator()) {
-                    $CurrentValue = $CurrDataSet.($Property.Key)
-                    If ([string]::IsNullOrEmpty($CurrentValue)) {
-                        $Attribute = $CurrDataSet.OwnerDocument.CreateAttribute($Property.Key)
-                        $CurrDataSet.Attributes.Append($Attribute)
-                        $CurrDataSet.SetAttribute($Property.Key, $Property.Value)
-                    }
-                    Elseif ($CurrentValue -ne $Property.Value) { $CurrDataSet.SetAttribute($Property.Key, $Property.Value) }            
-                }
-            }
-        }
-        If ($ToRemove -ne $Null) {
-            Foreach ($DataSet in @($ToRemove)) {
-                $Remove = @($DataSetsXML.datasets.dataset | Where user -eq $DataSet)[0]
-                $DataSetsXml.datasets.RemoveChild($Remove)
-            }
-        }
-        $DataSetsXML.Save("$ClusterDisk\Crews-Adaptor\config\datasets.xml")
-    }
-    If ($CurrentState.Installed -eq $False) { 
-        Write-Verbose "Installing Crews Adaptor"
-        If (!(Test-Path $ClusterDisk)) {
-            New-Item -Path "$PSScriptRoot\Temp" -ItemType Directory -Force
-            Expand-Archive -Path "$PSScriptRoot\CrewsAdaptor.zip" -DestinationPath "$PSScriptRoot\Temp"
-            Start-Process -FilePath "$PSScriptRoot\Temp\install-crews.cmd" -Wait
-            Remove-Item "$PSScriptRoot\Temp" -Recurse -Force
-            $CurrentState.CorrectParameters = $False
-        }
-        Else { Start-Process -FilePath "$ClusterDisk\Crews-Adaptor\install-crews.cmd" -Wait }
-    }
-    If ($CurrentState.CorrectImagePath -eq $False) { Write-Verbose "Setting imagepath in registry" ; Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\CrewsAdaptor" -Name 'ImagePath' -Value "$($ClusterDisk.Replace('\',''))\Crews-Adaptor\crews-service.exe" }
-    If ($CurrentState.CorrectParameters -eq $False) { 
-        Write-Verbose "Setting registry parameters"
-        $RegParameters = Get-Item "HKLM:\SYSTEM\CurrentControlSet\Services\CrewsAdaptor\Parameters"
-        $CurrParameters = $RegParameters.GetValueNames()
-        Foreach ($Parameter in $CurrentState.Parameters) {
-            If ($Parameter.Name -notin $CurrParameters) { New-ItemProperty -Path $RegParameters.PSPath -Name $Parameter.Name -Value $Parameter.Value -PropertyType 'string' }
-            Elseif ($RegParameters.GetValue($Parameter.Name) -ne $Parameter.Value) { Set-ItemProperty -Path $RegParameters.PSPath -Name $Parameter.Name -Value $Parameter.Value }
-        }
-    }
-    If ($CurrentState.Clustered -eq $False) { Write-Verbose "Clustering Crews Adaptor" ; Add-ClusterResource -Name "CrewsAdaptor" -ResourceType "Generic Service" -Group $GroupName -Verbose:$False }
-    If ($CurrentState.CorrectParam -eq $False) { Write-Verbose "Configuring Crews Adaptor" ; Get-ClusterResource -Name "CrewsAdaptor" | Set-ClusterParameter -Name ServiceName -Value "CrewsAdaptor" -Verbose:$False }
-    If ($CurrentState.Online -eq $True -and $CurrentState.RequireRestart -eq $True) {
-        Write-Verbose "Restarting Crews Adaptor"
-        Get-ClusterResource -Name "CrewsAdaptor" -Verbose:$False | Stop-ClusterResource -Verbose:$False
-        Get-ClusterResource -Name "CrewsAdaptor" -Verbose:$False | Start-ClusterResource -Verbose:$False
-    }
-    Elseif ($CurrentState.Online -eq $False) { Write-Verbose "Starting Crews Adaptor" ; Get-ClusterResource -Name "CrewsAdaptor" -Verbose:$False | Start-ClusterResource -Verbose:$False }
+    If ($Actions -contains "InstallService") { Start-Process -FilePath "$ClusterDisk\Crews-Adaptor\install-crews.cmd" -Wait }
+    If ($Actions -contains "ConfigureRegistry") { Configure-Registry -ClusterDisk $ClusterDisk -JavaPath $JavaPath -OraHome $OraHome }
+    If ($Actions -contains "ConfigureProperties") { Configure-PropertiesFile @PSBoundParameters }
+    If ($Actions -contains "ConfigureDatasets") { Configure-DataSets -ClusterDisk $ClusterDisk -DataSets $DataSets }
+    If ($Actions -contains "ClusterService") { Add-ClusterResource -Name "CrewsAdaptor" -ResourceType "Generic Service" -Group $GroupName }
+    If ($Actions -contains "SetClusterParameter") { Get-ClusterResource -Name "CrewsAdaptor" | Set-ClusterParameter -Name ServiceName -Value "CrewsAdaptor" }
+    If ($Actions -contains "TakeOffline") { Get-ClusterResource -Name "CrewsAdaptor" | Stop-ClusterResource -ErrorAction SilentlyContinue }
+    If ($Actions -contains "BringOnline") { Get-ClusterResource -Name "CrewsAdaptor" | Start-ClusterResource -ErrorAction SilentlyContinue }
+
 }
 
 Function Test-TargetResource {
@@ -412,7 +332,8 @@ Function Test-TargetResource {
         [string]$JMSPassword
 
     )
-    Return (Get-TargetResource @PSBoundParameters).DesiredState
+
+    Get-TargetResource @PSBoundParameters
 }
 
 Function Configure-PropertiesFile {
@@ -484,93 +405,81 @@ Function Configure-PropertiesFile {
 
     )
 
-    $ConfigProperties = Get-Content -Path "$ClusterDisk\Crews-Adaptor\config\crews-adaptor.properties"
+    $ClusterDisk = "$($ClusterDisk.Replace('\','').Replace(':','').Trim()):"
+    $ConfigProperties = Get-Content -Path "${ClusterDisk}\Crews-Adaptor\config\crews-adaptor.properties"
     $JDBC = $ConfigProperties | Select-String "jdbc.url" | ? { $_.Line.StartsWith('#') -eq $False }
 
     $Checks = @(
         @{
             Type = [string]
             Regex = '(?<=HOST=).+?(?=\))'
-            SearchString = $Null
             LineNumber = $JDBC.LineNumber
             Value = $DBHost
         },
         @{
             Type = [int]
             Regex = '(?<=PORT=).+?(?=\))'
-            SearchString = $Null
             LineNumber = $JDBC.LineNumber
             Value = $DBPort
         },
         @{
             Type = [string]
             Regex = '(?<=SERVICE_NAME=).+?(?=\))'
-            SearchString = $Null
             LineNumber = $JDBC.LineNumber
             Value = $ServiceName
         },
         @{
             Type = [string]
-            Regex = $Null
-            SearchString = "jms.host"
+            Regex = '(?<=jms.host=).+$'
             LineNumber = ($ConfigProperties | Select-String "jms.host").LineNumber
             Value = $JMSHost
         },
         @{
             Type = [int]
-            Regex = $Null
-            SearchString = "jms.port"
+            Regex = '(?<=jms.port=).+$'
             LineNumber = ($ConfigProperties | Select-String "jms.port").LineNumber
             Value = $JMSPort
         },
         @{
             Type = [string]
-            Regex = $Null
-            SearchString = "jms.queueManager"
+            Regex = '(?<=jms.queueManager=).+$'
             LineNumber = ($ConfigProperties | Select-String "jms.queueManager").LineNumber
             Value = $JMSQManager
         },
         @{
             Type = [int]
-            Regex = $Null
-            SearchString = "jms.transporttype"
+            Regex = '(?<=jms.transportType=).+$'
             LineNumber = ($ConfigProperties | Select-String "jms.transporttype").LineNumber
             Value = $JMSTransportType
         },
         @{
             Type = [string]
-            Regex = $Null
-            SearchString = "jms.queuename"
+            Regex = '(?<=jms.queueName=).+$'
             LineNumber = ($ConfigProperties | Select-String "jms.queuename").LineNumber
             Value = $JMSQName
         },
         @{
             Type = [string]
-            Regex = $Null
-            SearchString = "jms.username"
+            Regex = '(?<=jms.username=).+$'
             LineNumber = ($ConfigProperties | Select-String "jms.username").LineNumber
             Value = $JMSUsername
         },
         @{
             Type = [string]
-            Regex = $Null
-            SearchString = "jms.password"
+            Regex = '(?<=jms.password=).+$'
             LineNumber = ($ConfigProperties | Select-String "jms.password").LineNumber
             Value = $JMSPassword
         }
     )
 
     Foreach ($Check in $Checks) {
-        If (![string]::IsNullOrEmpty($Check.Regex)) { $CurrentValue = ([regex]::match($ConfigProperties[$Check.LineNumber - 1],$Check.Regex)).Value }
-        Elseif (![string]::IsNullOrEmpty($Check.SearchString)) { $CurrentValue = ($ConfigProperties[$Check.LineNumber - 1] -split "=")[1].Trim() } 
-        $CurrentValue = $CurrentValue.ToType($Check.Type,$Null)
+        $CurrentValue = ([regex]::match($ConfigProperties[$Check.LineNumber - 1],$Check.Regex)).Value 
+        If ([string]::IsNullOrEmpty($CurrentValue)) { $CurrentValue = ([regex]::match($ConfigProperties[$Check.LineNumber - 1],$Check.Regex.ToLower())).Value }
+        If ([string]::IsNullOrEmpty($CurrentValue)) { Continue }
+        $CurrentValue = $CurrentValue.ToType($Check.Type,$Null)        
         If ($CurrentValue -ne $Check.Value) {
             If ($ReturnBoolean) { Return $False }
-            Elseif (![string]::IsNullOrEmpty($Check.SearchString)) { 
-                $ConfigProperties[$Check.LineNumber - 1] = $ConfigProperties[$Check.LineNumber - 1].Replace($CurrentValue.ToString(),$Check.Value.ToString())
-                $ConfigChanged = $True 
-            }
-            Elseif (![string]::IsNullOrEmpty($Check.Regex)) { 
+            Else { 
                 $ConfigProperties[$Check.LineNumber - 1] = $ConfigProperties[$Check.LineNumber - 1] -replace $Check.regex,$Check.Value.ToString()
                 $ConfigChanged = $True 
             }
@@ -578,4 +487,221 @@ Function Configure-PropertiesFile {
     }
     If ($ReturnBoolean) { Return $True } 
     Elseif ($ConfigChanged) { Set-Content -Path "$ClusterDisk\Crews-Adaptor\config\crews-adaptor.properties" -Value $ConfigProperties }
+}
+
+Function Configure-Registry {
+    
+    Param(
+
+        [Parameter(Mandatory=$True)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ClusterDisk,
+
+        [Parameter(Mandatory=$True)]
+        [ValidateNotNullOrEmpty()]
+        [string]$JavaPath,
+
+        [Parameter(Mandatory=$True)]
+        [ValidateNotNullOrEmpty()]
+        [string]$OraHome,
+
+        [Parameter(Mandatory=$False)]
+        [switch]$ReturnBoolean = $False
+    )
+    
+    $Registry = @(
+        @{
+            Key = "HKLM:\SYSTEM\CurrentControlSet\Services\CrewsAdaptor"
+            Properties = @(
+                @{
+                    Name = "Description"
+                    Value = "JavaService utility runs Java applications as services. See http://javaservice.objectweb.org"
+                    Type = "String"
+                },
+                @{
+                    Name = "DisplayName"
+                    Value = "CrewsAdaptor"
+                    Type = "String"
+                },
+                @{
+                    Name = "ErrorControl"
+                    Value = "1"
+                    Type = "DWord"
+                },
+                @{
+                    Name = "ImagePath"
+                    Value = "${ClusterDisk}\crews-adaptor\crews-service.exe"
+                    Type = "ExpandString"
+                },
+                @{
+                    Name = "ObjectName"
+                    Value = "LocalSystem"
+                    Type = "String"
+                },
+                @{
+                    Name = "Start"
+                    Value = "3"
+                    Type = "DWord"
+                },
+                @{
+                    Name = "Type"
+                    Value = "16"
+                    Type = "DWord"
+                }
+            )
+        },
+        @{
+            Key = "HKLM:\SYSTEM\CurrentControlSet\Services\CrewsAdaptor\Parameters"
+            Properties = @(
+                @{
+                    Name = "Current Directory"
+                    Value = "${ClusterDisk}\crews-adaptor"
+                    Type = "String"
+                },
+                @{
+                    Name = "JavaService Version"
+                    Value = "2,0,10,1"
+                    Type = "String"
+                },
+                @{
+                    Name = "JVM Library"
+                    Value = "${JavaPath}\jre\bin\server\jvm.dll" 
+                    Type = "String"
+                },
+                @{
+                    Name = "JVM Option Count"
+                    Value = "1"
+                    Type = "DWord"
+                },
+                @{
+                    Name = "JVM Option Number 0"
+                    Value = "-Djava.class.path=${ClusterDisk}\Crews-adaptor\config;${ClusterDisk}\crews-adaptor\com.ibm.mq.runtime_7.0.1.3\lib\com.ibm.mqjms.jar;${OraHome}\jdbc\lib\ojdbc6.jar;${ClusterDisk}\Crews-adaptor\lib\crews-adaptor-main.jar"
+                    Type = "String"
+                },
+                @{
+                    Name = "Overwrite Files Flag"
+                    Value = "0"
+                    Type = "DWord"
+                },
+                @{
+                    Name = "Shutdown Timeout"
+                    Value = "30000"
+                    Type = "DWord"
+                },
+                @{
+                    Name = "Start Class"
+                    Value = "com.hp.emea.ttsol.crews.CrewsAdaptor"
+                    Type = "String"
+                },
+                @{
+                    Name = "Start Method"
+                    Value = "main"
+                    Type = "String"
+                },
+                @{
+                    Name = "Start Param Count"
+                    Value = "0"
+                    Type = "DWord"
+                },
+                @{
+                    Name = "Startup Sleep"
+                    Value = "0"
+                    Type = "DWord"
+                },
+                @{
+                    Name = "System.err File"
+                    Value = "${ClusterDisk}\Crews-adaptor\log\stderr.log"
+                    Type = "String"
+                },
+                @{
+                    Name = "System.out File"
+                    Value = "${ClusterDisk}\Crews-adaptor\log\stdout.log"
+                    Type = "String"
+                }
+            )
+        }
+    )
+
+    Foreach ($Key in $Registry) {
+        If (-not (Test-Path $Key.Key)) {
+            If ($ReturnBoolean) { Return $False }
+            New-Item -Path $Key.Key -Force
+        }
+        $Properties = (Get-Item $Key.Key).GetValueNames()
+        Foreach ($Property in $Key.Properties) {
+            If ($Property.Name -notin $Properties) {
+                If ($ReturnBoolean) { Return $False }
+                New-ItemProperty -Path $Key.Key -Name $Property.Name -Value $Property.Value -PropertyType $Property.Type
+            }
+            Else {
+                $Value = Get-ItemPropertyValue -Path $Key.Key -Name $Property.Name
+                If ($Value -cne $Property.Value) {
+                    If ($ReturnBoolean) { Return $False }
+                    Set-ItemProperty -Path $Key.Key -Name $Property.Name -Value $Property.Value
+                }
+            }
+        }
+    }
+
+    If ($ReturnBoolean) { Return $True }
+
+}
+
+Function Configure-DataSets {
+
+    Param(
+
+        [Parameter(Mandatory=$True)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ClusterDisk,
+
+        [Parameter(Mandatory=$True)]
+        [ValidateNotNullOrEmpty()]
+        [string[]]$DataSets,
+
+        [Parameter(Mandatory=$False)]
+        [switch]$ReturnBoolean = $False
+
+    )
+
+    $DataSetsXML = [xml](Get-Content -Path "${ClusterDisk}\Crews-Adaptor\config\datasets.xml")
+    $RequiredDatasets = $DataSets | % { ((($_ -split ";") | ? { $_ -match "user=" }) -split "=")[1] }
+    $CurrentDatasets = $DataSetsXML.datasets.dataset.user
+    $ToRemove = (Compare-Object -ReferenceObject $RequiredDatasets -DifferenceObject $CurrentDatasets | Where SideIndicator -eq "=>").InputObject
+    If ($ReturnBoolean -and $ToRemove.Count -gt 0) { Return $False }
+    
+    Foreach ($Dataset in $DataSets){
+        $DataSet -split ';' | % -Begin { $Properties = @{} } -Process { $Split = $_ -split "=" ; $Properties.Add($Split[0],$Split[1]) }
+        $CurrDataSet = $DataSetsXML.datasets.dataset | Where user -eq $Properties.user
+        If ($CurrDataSet -eq $Null) {
+            If ($ReturnBoolean) { Return $False } 
+            [xml]$Child = "<dataset $(($Properties.GetEnumerator() | % { ("$($_.Key)=" + '"' + "$($_.Value)" + '"') }) -join " ") $('vertraging="true" dienstregeling="true" materieelplan="false"/>')"
+            $DataSetsXML.datasets.AppendChild($DataSetsXML.ImportNode($Child.dataset,$True))
+        }
+        Else {
+            Foreach ($Property in $Properties.GetEnumerator()) {
+                $CurrentValue = $CurrDataSet.($Property.Key)
+                If ([string]::IsNullOrEmpty($CurrentValue)) {
+                    If ($ReturnBoolean) { Return $False }
+                    $Attribute = $CurrDataSet.OwnerDocument.CreateAttribute($Property.Key)
+                    $CurrDataSet.Attributes.Append($Attribute)
+                    $CurrDataSet.SetAttribute($Property.Key, $Property.Value)
+                }
+                Elseif ($CurrentValue -ne $Property.Value) { 
+                    If ($ReturnBoolean) { Return $False }
+                    $CurrDataSet.SetAttribute($Property.Key, $Property.Value) 
+                }            
+            }
+        }
+    }
+
+    If ($ToRemove.Count -gt 0) {
+        Foreach ($DataSet in $ToRemove) {
+            $Remove = @($DataSetsXML.datasets.dataset | Where user -eq $DataSet)[0]
+            $DataSetsXml.datasets.RemoveChild($Remove)
+        }
+    }
+
+    If ($ReturnBoolean) { Return $True }
+    $DataSetsXML.Save("$ClusterDisk\Crews-Adaptor\config\datasets.xml")
 }
