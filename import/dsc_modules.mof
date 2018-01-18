@@ -44,6 +44,7 @@
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_Passwordreq/cMisc_Passwordreq.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_Rename_Interface/cMisc_Rename_Interface.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_SetIPv6/cMisc_SetIPv6.schema.mof")
+#pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_SetLocale/cMisc_SetLocale.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_SetWSUS/cMisc_SetWSUS.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_SuspendNode/cMisc_SuspendNode.schema.mof")
 #pragma include ("/etc/puppetlabs/code/environments/puppetdev_bob/modules/dsc/import/dsc_resources/cMisc/DSCResources/cMisc_TimeSource/cMisc_TimeSource.schema.mof")
