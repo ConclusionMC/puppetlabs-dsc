@@ -1,7 +1,7 @@
 {
-  "name": "puppetlabs-dsc",
+  "name": "ConclusionMC-dsc",
   "version": "1.2.0",
-  "author": "Puppet Inc",
+  "author": "ConclusionMC",
   "summary": "PowerShell Desired State Configuration (DSC)",
   "license": "Apache-2.0",
   "source": "https://github.com/puppetlabs/puppetlabs-dsc",
